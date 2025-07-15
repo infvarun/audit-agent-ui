@@ -60,10 +60,20 @@ export default function StepOne({ applicationId, setApplicationId, onNext, setCa
 
   const createApplicationMutation = useMutation({
     mutationFn: async (data: ApplicationFormData) => {
-      const response = await apiRequest("POST", "/api/applications", data);
-      return response.json();
+      try {
+        console.log("Making API request with data:", data);
+        const response = await apiRequest("POST", "/api/applications", data);
+        console.log("Response received:", response.status, response.ok);
+        const result = await response.json();
+        console.log("Response JSON:", result);
+        return result;
+      } catch (error) {
+        console.error("API request failed:", error);
+        throw error;
+      }
     },
     onSuccess: (data) => {
+      console.log("Mutation success, application created:", data);
       setApplicationId(data.id);
       toast({
         title: "Application created successfully",
@@ -72,6 +82,7 @@ export default function StepOne({ applicationId, setApplicationId, onNext, setCa
       onNext();
     },
     onError: (error) => {
+      console.log("Mutation error:", error);
       toast({
         title: "Error",
         description: error.message,
@@ -88,6 +99,12 @@ export default function StepOne({ applicationId, setApplicationId, onNext, setCa
   // Handle Next button click from navigation
   useEffect(() => {
     const handleNextClick = () => {
+      // Prevent multiple submissions
+      if (createApplicationMutation.isPending) {
+        console.log("Mutation already pending, skipping");
+        return;
+      }
+      
       // Always trigger form submission, let validation handle invalid forms
       form.handleSubmit(onSubmit)();
     };
@@ -98,7 +115,7 @@ export default function StepOne({ applicationId, setApplicationId, onNext, setCa
     return () => {
       delete (window as any).stepOneSubmit;
     };
-  }, [form, onSubmit]);
+  }, [form, onSubmit, createApplicationMutation.isPending]);
 
   return (
     <div className="space-y-8">
