@@ -13,7 +13,7 @@
   --card-foreground: hsl(20, 14.3%, 4.1%);
   --border: hsl(20, 5.9%, 90%);
   --input: hsl(20, 5.9%, 90%);
-  --primary: hsl(207, 90%, 54%);
+  --primary: hsl(262, 73%, 57%);
   --primary-foreground: hsl(211, 100%, 99%);
   --secondary: hsl(60, 4.8%, 95.9%);
   --secondary-foreground: hsl(24, 9.8%, 10%);
@@ -21,8 +21,8 @@
   --accent-foreground: hsl(24, 9.8%, 10%);
   --destructive: hsl(0, 84.2%, 60.2%);
   --destructive-foreground: hsl(60, 9.1%, 97.8%);
-  --ring: hsl(20, 14.3%, 4.1%);
-  --radius: 0.5rem;
+  --ring: hsl(262, 73%, 57%);
+  --radius: 0.75rem;
   --success: hsl(142, 76%, 36%);
   --success-foreground: hsl(138, 76%, 97%);
   --warning: hsl(38, 92%, 50%);
@@ -42,7 +42,7 @@
   --card-foreground: hsl(0, 0%, 98%);
   --border: hsl(240, 3.7%, 15.9%);
   --input: hsl(240, 3.7%, 15.9%);
-  --primary: hsl(207, 90%, 54%);
+  --primary: hsl(262, 73%, 57%);
   --primary-foreground: hsl(211, 100%, 99%);
   --secondary: hsl(240, 3.7%, 15.9%);
   --secondary-foreground: hsl(0, 0%, 98%);
@@ -50,8 +50,8 @@
   --accent-foreground: hsl(0, 0%, 98%);
   --destructive: hsl(0, 62.8%, 30.6%);
   --destructive-foreground: hsl(0, 0%, 98%);
-  --ring: hsl(240, 4.9%, 83.9%);
-  --radius: 0.5rem;
+  --ring: hsl(262, 73%, 57%);
+  --radius: 0.75rem;
   --success: hsl(142, 76%, 36%);
   --success-foreground: hsl(138, 76%, 97%);
   --warning: hsl(38, 92%, 50%);
@@ -67,6 +67,32 @@
 
   body {
     @apply font-sans antialiased bg-background text-foreground;
+  }
+}
+
+@layer components {
+  .btn-gradient {
+    @apply bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 active:scale-95;
+  }
+  
+  .btn-gradient-outline {
+    @apply bg-transparent border-2 border-transparent bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-padding text-transparent bg-clip-text hover:bg-white hover:text-purple-600 font-semibold transition-all duration-300 hover:border-purple-600;
+  }
+  
+  .card-modern {
+    @apply bg-white/80 backdrop-blur-sm border border-white/20 shadow-xl hover:shadow-2xl transition-all duration-300 rounded-xl;
+  }
+  
+  .input-modern {
+    @apply bg-white/50 backdrop-blur-sm border border-purple-200 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition-all duration-300 rounded-lg;
+  }
+  
+  .progress-modern {
+    @apply bg-gradient-to-r from-purple-500 to-blue-500 rounded-full transition-all duration-500;
+  }
+  
+  .glass-effect {
+    @apply bg-white/10 backdrop-blur-lg border border-white/20 shadow-xl;
   }
 }
 

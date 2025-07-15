@@ -120,11 +120,13 @@ export default function StepOne({ applicationId, setApplicationId, onNext, setCa
 
   return (
     <div className="space-y-8">
-      <Card>
+      <Card className="card-modern">
         <CardHeader>
           <CardTitle className="flex items-center space-x-3">
-            <Rocket className="h-5 w-5 text-primary" />
-            <span>Application Onboarding</span>
+            <Rocket className="h-5 w-5 text-purple-600" />
+            <span className="bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
+              Application Onboarding
+            </span>
           </CardTitle>
           <p className="text-sm text-slate-600">
             Configure your audit application settings and parameters
@@ -145,6 +147,7 @@ export default function StepOne({ applicationId, setApplicationId, onNext, setCa
                     <FormControl>
                       <Input
                         placeholder="Enter application name (e.g., Customer Portal Audit)"
+                        className="input-modern"
                         {...field}
                       />
                     </FormControl>
@@ -166,7 +169,7 @@ export default function StepOne({ applicationId, setApplicationId, onNext, setCa
                         Audit Start Date <span className="text-red-500">*</span>
                       </FormLabel>
                       <FormControl>
-                        <Input type="date" {...field} />
+                        <Input type="date" className="input-modern" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -182,7 +185,7 @@ export default function StepOne({ applicationId, setApplicationId, onNext, setCa
                         Audit End Date <span className="text-red-500">*</span>
                       </FormLabel>
                       <FormControl>
-                        <Input type="date" {...field} />
+                        <Input type="date" className="input-modern" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -201,6 +204,7 @@ export default function StepOne({ applicationId, setApplicationId, onNext, setCa
                     <FormControl>
                       <Input
                         placeholder="Enter CI ID (e.g., CI-12345)"
+                        className="input-modern"
                         {...field}
                       />
                     </FormControl>
@@ -212,8 +216,8 @@ export default function StepOne({ applicationId, setApplicationId, onNext, setCa
                 )}
               />
 
-              <div className="bg-slate-50 rounded-lg p-4">
-                <h3 className="text-sm font-medium text-slate-900 mb-3">
+              <div className="bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg p-4 border border-purple-200">
+                <h3 className="text-sm font-medium bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent mb-3">
                   Additional Settings
                 </h3>
                 <div className="space-y-3">

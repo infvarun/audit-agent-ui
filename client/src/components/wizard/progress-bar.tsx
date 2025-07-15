@@ -11,7 +11,7 @@ interface ProgressBarProps {
 
 export default function ProgressBar({ currentStep, totalSteps, steps }: ProgressBarProps) {
   return (
-    <div className="bg-white border-b border-slate-200">
+    <div className="bg-white/80 backdrop-blur-sm border-b border-purple-200">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-8">
@@ -19,16 +19,16 @@ export default function ProgressBar({ currentStep, totalSteps, steps }: Progress
               <div key={step.id} className="flex items-center space-x-2">
                 {/* Step Circle */}
                 <div
-                  className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
+                  className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-all duration-300 ${
                     step.id <= currentStep
-                      ? "bg-primary text-white"
+                      ? "bg-gradient-to-r from-purple-600 to-blue-600 text-white shadow-lg"
                       : "bg-slate-200 text-slate-600"
                   }`}
                 >
                   {step.id}
                 </div>
                 <span
-                  className={`text-sm ${
+                  className={`text-sm transition-all duration-300 ${
                     step.id <= currentStep
                       ? "font-medium text-slate-900"
                       : "text-slate-500"
@@ -40,8 +40,8 @@ export default function ProgressBar({ currentStep, totalSteps, steps }: Progress
                 {/* Progress Line */}
                 {index < steps.length - 1 && (
                   <div
-                    className={`w-12 h-0.5 ${
-                      step.id < currentStep ? "bg-primary" : "bg-slate-300"
+                    className={`w-12 h-0.5 rounded-full transition-all duration-500 ${
+                      step.id < currentStep ? "progress-modern" : "bg-slate-300"
                     }`}
                   />
                 )}
@@ -50,7 +50,9 @@ export default function ProgressBar({ currentStep, totalSteps, steps }: Progress
           </div>
           
           <div className="text-sm text-slate-600">
-            <span className="font-medium">Step {currentStep} of {totalSteps}</span> - {steps[currentStep - 1]?.title}
+            <span className="font-medium bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
+              Step {currentStep} of {totalSteps}
+            </span> - {steps[currentStep - 1]?.title}
           </div>
         </div>
       </div>

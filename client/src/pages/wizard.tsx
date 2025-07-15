@@ -56,17 +56,17 @@ export default function WizardPage() {
   const CurrentStepComponent = currentStepData?.component;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
+    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-indigo-100">
       {/* Header */}
-      <header className="bg-white shadow-sm border-b border-slate-200">
+      <header className="bg-white/80 backdrop-blur-lg shadow-lg border-b border-purple-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center space-x-4">
               <div className="flex-shrink-0">
-                <Shield className="h-8 w-8 text-primary" />
+                <Shield className="h-8 w-8 text-purple-600" />
               </div>
               <div>
-                <h1 className="text-xl font-semibold text-slate-900">
+                <h1 className="text-xl font-semibold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
                   Audit Data Collection Wizard
                 </h1>
                 <p className="text-sm text-slate-600">
@@ -77,9 +77,9 @@ export default function WizardPage() {
             <div className="flex items-center space-x-4">
               <div className="text-sm text-slate-600">
                 <span className="font-medium">Session:</span>{" "}
-                <span>ADC-2024-001</span>
+                <span className="font-mono text-purple-600">ADC-2024-001</span>
               </div>
-              <button className="text-slate-400 hover:text-slate-600 transition-colors">
+              <button className="text-purple-400 hover:text-purple-600 transition-colors p-2 rounded-lg hover:bg-purple-50">
                 <Settings className="h-5 w-5" />
               </button>
             </div>

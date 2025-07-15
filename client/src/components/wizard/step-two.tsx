@@ -79,11 +79,13 @@ export default function StepTwo({ applicationId, onNext, setCanProceed }: StepTw
   if (dataRequest) {
     return (
       <div className="space-y-8">
-        <Card>
+        <Card className="card-modern">
           <CardHeader>
             <CardTitle className="flex items-center space-x-3">
-              <FileSpreadsheet className="h-5 w-5 text-success" />
-              <span>Data Request File Upload</span>
+              <FileSpreadsheet className="h-5 w-5 text-green-600" />
+              <span className="bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
+                Data Request File Upload
+              </span>
             </CardTitle>
             <p className="text-sm text-slate-600">
               Upload the Excel file containing audit questions and requirements
@@ -155,11 +157,13 @@ export default function StepTwo({ applicationId, onNext, setCanProceed }: StepTw
 
   return (
     <div className="space-y-8">
-      <Card>
+      <Card className="card-modern">
         <CardHeader>
           <CardTitle className="flex items-center space-x-3">
-            <FileSpreadsheet className="h-5 w-5 text-success" />
-            <span>Data Request File Upload</span>
+            <FileSpreadsheet className="h-5 w-5 text-purple-600" />
+            <span className="bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
+              Data Request File Upload
+            </span>
           </CardTitle>
           <p className="text-sm text-slate-600">
             Upload the Excel file containing audit questions and requirements
@@ -168,8 +172,8 @@ export default function StepTwo({ applicationId, onNext, setCanProceed }: StepTw
         
         <CardContent>
           {/* File Upload Zone */}
-          <div className="border-2 border-dashed border-slate-300 rounded-lg p-8 text-center hover:border-primary transition-colors">
-            <Upload className="mx-auto h-12 w-12 text-slate-400 mb-4" />
+          <div className="border-2 border-dashed border-purple-300 rounded-lg p-8 text-center hover:border-purple-500 hover:bg-purple-50/50 transition-all duration-300">
+            <Upload className="mx-auto h-12 w-12 text-purple-400 mb-4" />
             <h3 className="text-lg font-medium text-slate-900 mb-2">
               Drop your Excel file here
             </h3>
@@ -183,7 +187,7 @@ export default function StepTwo({ applicationId, onNext, setCanProceed }: StepTw
                 onChange={handleFileSelect}
                 className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
               />
-              <Button variant="outline">Select File</Button>
+              <Button variant="outline" className="btn-gradient-outline">Select File</Button>
             </div>
             <p className="text-xs text-slate-400 mt-4">
               Supported formats: .xlsx, .xls (Max size: 10MB)
@@ -210,6 +214,7 @@ export default function StepTwo({ applicationId, onNext, setCanProceed }: StepTw
                     onClick={handleUpload}
                     disabled={uploadMutation.isPending}
                     size="sm"
+                    className="btn-gradient"
                   >
                     {uploadMutation.isPending ? "Uploading..." : "Upload"}
                   </Button>
