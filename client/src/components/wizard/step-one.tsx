@@ -81,15 +81,15 @@ export default function StepOne({ applicationId, setApplicationId, onNext, setCa
   });
 
   const onSubmit = (data: ApplicationFormData) => {
+    console.log("Form submission triggered with data:", data);
     createApplicationMutation.mutate(data);
   };
 
   // Handle Next button click from navigation
   useEffect(() => {
     const handleNextClick = () => {
-      if (form.formState.isValid) {
-        form.handleSubmit(onSubmit)();
-      }
+      // Always trigger form submission, let validation handle invalid forms
+      form.handleSubmit(onSubmit)();
     };
     
     // Store the handler for the parent component to call

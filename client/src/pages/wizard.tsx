@@ -22,10 +22,14 @@ export default function WizardPage() {
   const [canProceed, setCanProceed] = useState(false);
 
   const handleNext = () => {
+    console.log("Next button clicked, current step:", currentStep);
     if (currentStep === 1) {
       // For step 1, trigger form submission
       if ((window as any).stepOneSubmit) {
+        console.log("Triggering step one submit");
         (window as any).stepOneSubmit();
+      } else {
+        console.log("stepOneSubmit not found");
       }
     } else if (currentStep < steps.length) {
       setCurrentStep(currentStep + 1);
