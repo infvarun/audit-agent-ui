@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { FileSpreadsheet, Upload, X, CheckCircle, List, Tags, Clock } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,9 +9,10 @@ import { useToast } from "@/hooks/use-toast";
 interface StepTwoProps {
   applicationId: number | null;
   onNext: () => void;
+  setCanProceed: (canProceed: boolean) => void;
 }
 
-export default function StepTwo({ applicationId, onNext }: StepTwoProps) {
+export default function StepTwo({ applicationId, onNext, setCanProceed }: StepTwoProps) {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const { toast } = useToast();
 
@@ -19,6 +20,11 @@ export default function StepTwo({ applicationId, onNext }: StepTwoProps) {
     queryKey: ["/api/data-requests/application", applicationId],
     enabled: !!applicationId,
   });
+
+  // Enable next button if data request exists or file is selected
+  useEffect(() => {
+    setCanProceed(!!dataRequest || !!selectedFile);
+  }, [dataRequest, selectedFile, setCanProceed]);
 
   const uploadMutation = useMutation({
     mutationFn: async (file: File) => {

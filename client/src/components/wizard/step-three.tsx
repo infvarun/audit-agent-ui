@@ -12,6 +12,7 @@ import { useToast } from "@/hooks/use-toast";
 interface StepThreeProps {
   applicationId: number | null;
   onNext: () => void;
+  setCanProceed: (canProceed: boolean) => void;
 }
 
 interface ConnectorConfig {
@@ -103,7 +104,7 @@ const connectorConfigs: ConnectorConfig[] = [
   },
 ];
 
-export default function StepThree({ applicationId, onNext }: StepThreeProps) {
+export default function StepThree({ applicationId, onNext, setCanProceed }: StepThreeProps) {
   const [connectorData, setConnectorData] = useState<Record<string, Record<string, string>>>({});
   const { toast } = useToast();
 
@@ -173,6 +174,11 @@ export default function StepThree({ applicationId, onNext }: StepThreeProps) {
   const allConnectorsConfigured = connectorConfigs.every(config => 
     getConnectorStatus(config.type) === "connected"
   );
+
+  // Enable next button when all connectors are configured
+  useEffect(() => {
+    setCanProceed(allConnectorsConfigured);
+  }, [allConnectorsConfigured, setCanProceed]);
 
   return (
     <div className="space-y-8">

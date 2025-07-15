@@ -11,6 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 interface StepFourProps {
   applicationId: number | null;
   onNext: () => void;
+  setCanProceed: (canProceed: boolean) => void;
 }
 
 interface ConnectionNode {
@@ -31,7 +32,7 @@ const connectionNodes: ConnectionNode[] = [
   { id: "adc", name: "ADC", icon: <Route className="h-4 w-4" />, color: "bg-indigo-500", position: { x: 90, y: 50 }, status: "idle" },
 ];
 
-export default function StepFour({ applicationId, onNext }: StepFourProps) {
+export default function StepFour({ applicationId, onNext, setCanProceed }: StepFourProps) {
   const [nodes, setNodes] = useState<ConnectionNode[]>(connectionNodes);
   const [sessionStarted, setSessionStarted] = useState(false);
   const { toast } = useToast();
@@ -69,11 +70,12 @@ export default function StepFour({ applicationId, onNext }: StepFourProps) {
 
   useEffect(() => {
     if (session?.status === "completed") {
+      setCanProceed(true);
       setTimeout(() => {
         onNext();
       }, 2000);
     }
-  }, [session?.status, onNext]);
+  }, [session?.status, onNext, setCanProceed]);
 
   // Animate nodes based on progress
   useEffect(() => {

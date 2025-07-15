@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { useEffect } from "react";
 import { TrendingUp, CheckCircle, Clock, XCircle, CircleHelp, FileText, Download, FolderOpen } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -7,13 +8,19 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 
 interface StepFiveProps {
   applicationId: number | null;
+  setCanProceed: (canProceed: boolean) => void;
 }
 
-export default function StepFive({ applicationId }: StepFiveProps) {
+export default function StepFive({ applicationId, setCanProceed }: StepFiveProps) {
   const { data: auditResults = [], isLoading } = useQuery({
     queryKey: ["/api/audit-results/application", applicationId],
     enabled: !!applicationId,
   });
+
+  // Step 5 is the final step, no next button needed
+  useEffect(() => {
+    setCanProceed(false);
+  }, [setCanProceed]);
 
   const completed = auditResults.filter((r: any) => r.status === "completed").length;
   const partial = auditResults.filter((r: any) => r.status === "partial").length;

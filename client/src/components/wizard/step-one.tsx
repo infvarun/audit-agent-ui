@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
@@ -29,9 +29,10 @@ interface StepOneProps {
   applicationId: number | null;
   setApplicationId: (id: number) => void;
   onNext: () => void;
+  setCanProceed: (canProceed: boolean) => void;
 }
 
-export default function StepOne({ applicationId, setApplicationId, onNext }: StepOneProps) {
+export default function StepOne({ applicationId, setApplicationId, onNext, setCanProceed }: StepOneProps) {
   const { toast } = useToast();
   
   const form = useForm<ApplicationFormData>({
@@ -48,6 +49,14 @@ export default function StepOne({ applicationId, setApplicationId, onNext }: Ste
       },
     },
   });
+
+  // Watch form values to enable/disable next button
+  const watchedValues = form.watch();
+  useEffect(() => {
+    const { name, startDate, endDate, ciId } = watchedValues;
+    const isValid = Boolean(name && startDate && endDate && ciId) && !form.formState.isSubmitting;
+    setCanProceed(isValid);
+  }, [watchedValues, form.formState.isSubmitting, setCanProceed]);
 
   const createApplicationMutation = useMutation({
     mutationFn: async (data: ApplicationFormData) => {
@@ -74,6 +83,22 @@ export default function StepOne({ applicationId, setApplicationId, onNext }: Ste
   const onSubmit = (data: ApplicationFormData) => {
     createApplicationMutation.mutate(data);
   };
+
+  // Handle Next button click from navigation
+  useEffect(() => {
+    const handleNextClick = () => {
+      if (form.formState.isValid) {
+        form.handleSubmit(onSubmit)();
+      }
+    };
+    
+    // Store the handler for the parent component to call
+    (window as any).stepOneSubmit = handleNextClick;
+    
+    return () => {
+      delete (window as any).stepOneSubmit;
+    };
+  }, [form, onSubmit]);
 
   return (
     <div className="space-y-8">

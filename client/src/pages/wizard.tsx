@@ -19,16 +19,24 @@ const steps = [
 export default function WizardPage() {
   const [currentStep, setCurrentStep] = useState(1);
   const [applicationId, setApplicationId] = useState<number | null>(null);
+  const [canProceed, setCanProceed] = useState(false);
 
   const handleNext = () => {
-    if (currentStep < steps.length) {
+    if (currentStep === 1) {
+      // For step 1, trigger form submission
+      if ((window as any).stepOneSubmit) {
+        (window as any).stepOneSubmit();
+      }
+    } else if (currentStep < steps.length) {
       setCurrentStep(currentStep + 1);
+      setCanProceed(false); // Reset for next step
     }
   };
 
   const handlePrevious = () => {
     if (currentStep > 1) {
       setCurrentStep(currentStep - 1);
+      setCanProceed(true); // Allow going back
     }
   };
 
@@ -77,6 +85,7 @@ export default function WizardPage() {
             applicationId={applicationId}
             setApplicationId={setApplicationId}
             onNext={handleNext}
+            setCanProceed={setCanProceed}
           />
         )}
 
@@ -86,7 +95,7 @@ export default function WizardPage() {
           totalSteps={steps.length}
           onNext={handleNext}
           onPrevious={handlePrevious}
-          canProceed={applicationId !== null || currentStep > 1}
+          canProceed={canProceed}
         />
       </main>
     </div>
