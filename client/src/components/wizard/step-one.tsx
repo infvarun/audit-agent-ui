@@ -79,6 +79,7 @@ export default function StepOne({ applicationId, setApplicationId, onNext, setCa
         title: "Application created successfully",
         description: "Your audit application has been configured.",
       });
+      console.log("Calling onNext() to advance to step 2");
       onNext();
     },
     onError: (error) => {

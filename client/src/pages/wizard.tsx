@@ -37,6 +37,14 @@ export default function WizardPage() {
     }
   };
 
+  const advanceStep = () => {
+    console.log("Advancing step from", currentStep, "to", currentStep + 1);
+    if (currentStep < steps.length) {
+      setCurrentStep(currentStep + 1);
+      setCanProceed(false); // Reset for next step
+    }
+  };
+
   const handlePrevious = () => {
     if (currentStep > 1) {
       setCurrentStep(currentStep - 1);
@@ -88,7 +96,7 @@ export default function WizardPage() {
           <CurrentStepComponent
             applicationId={applicationId}
             setApplicationId={setApplicationId}
-            onNext={handleNext}
+            onNext={currentStep === 1 ? advanceStep : handleNext}
             setCanProceed={setCanProceed}
           />
         )}
