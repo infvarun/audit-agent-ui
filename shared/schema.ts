@@ -1,0 +1,92 @@
+import { pgTable, text, serial, integer, boolean, timestamp, json } from "drizzle-orm/pg-core";
+import { createInsertSchema } from "drizzle-zod";
+import { z } from "zod";
+
+export const applications = pgTable("applications", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  ciId: text("ci_id").notNull(),
+  startDate: text("start_date").notNull(),
+  endDate: text("end_date").notNull(),
+  settings: json("settings"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const dataRequests = pgTable("data_requests", {
+  id: serial("id").primaryKey(),
+  applicationId: integer("application_id").references(() => applications.id),
+  fileName: text("file_name").notNull(),
+  fileSize: integer("file_size").notNull(),
+  questions: json("questions").notNull(),
+  totalQuestions: integer("total_questions").notNull(),
+  categories: integer("categories").notNull(),
+  uploadedAt: timestamp("uploaded_at").defaultNow(),
+});
+
+export const toolConnectors = pgTable("tool_connectors", {
+  id: serial("id").primaryKey(),
+  applicationId: integer("application_id").references(() => applications.id),
+  connectorType: text("connector_type").notNull(),
+  configuration: json("configuration").notNull(),
+  status: text("status").notNull().default("pending"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const dataCollectionSessions = pgTable("data_collection_sessions", {
+  id: serial("id").primaryKey(),
+  applicationId: integer("application_id").references(() => applications.id),
+  status: text("status").notNull().default("pending"),
+  progress: integer("progress").notNull().default(0),
+  logs: json("logs").notNull().default([]),
+  startedAt: timestamp("started_at"),
+  completedAt: timestamp("completed_at"),
+});
+
+export const auditResults = pgTable("audit_results", {
+  id: serial("id").primaryKey(),
+  applicationId: integer("application_id").references(() => applications.id),
+  sessionId: integer("session_id").references(() => dataCollectionSessions.id),
+  questionId: text("question_id").notNull(),
+  question: text("question").notNull(),
+  category: text("category").notNull(),
+  status: text("status").notNull(),
+  documentPath: text("document_path"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const insertApplicationSchema = createInsertSchema(applications).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertDataRequestSchema = createInsertSchema(dataRequests).omit({
+  id: true,
+  uploadedAt: true,
+});
+
+export const insertToolConnectorSchema = createInsertSchema(toolConnectors).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertDataCollectionSessionSchema = createInsertSchema(dataCollectionSessions).omit({
+  id: true,
+  startedAt: true,
+  completedAt: true,
+});
+
+export const insertAuditResultSchema = createInsertSchema(auditResults).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type Application = typeof applications.$inferSelect;
+export type InsertApplication = z.infer<typeof insertApplicationSchema>;
+export type DataRequest = typeof dataRequests.$inferSelect;
+export type InsertDataRequest = z.infer<typeof insertDataRequestSchema>;
+export type ToolConnector = typeof toolConnectors.$inferSelect;
+export type InsertToolConnector = z.infer<typeof insertToolConnectorSchema>;
+export type DataCollectionSession = typeof dataCollectionSessions.$inferSelect;
+export type InsertDataCollectionSession = z.infer<typeof insertDataCollectionSessionSchema>;
+export type AuditResult = typeof auditResults.$inferSelect;
+export type InsertAuditResult = z.infer<typeof insertAuditResultSchema>;
