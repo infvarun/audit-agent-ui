@@ -63,6 +63,17 @@ export default function StepTwo({ applicationId, onNext, setCanProceed }: StepTw
     enabled: !!applicationId,
   });
 
+  // Get application data to check follow-up questions setting
+  const { data: applicationData } = useQuery({
+    queryKey: ["/api/applications", applicationId],
+    queryFn: async () => {
+      const response = await fetch(`/api/applications/${applicationId}`);
+      if (!response.ok) throw new Error("Failed to fetch application");
+      return response.json();
+    },
+    enabled: !!applicationId,
+  });
+
   // Check if we have processed files to allow proceeding
   useEffect(() => {
     const hasPrimaryFile = dataRequests?.some((req: any) => req.fileType === 'primary');
@@ -421,48 +432,50 @@ export default function StepTwo({ applicationId, onNext, setCanProceed }: StepTw
           </CardContent>
         </Card>
 
-        {/* Follow-up Question Files */}
-        <Card className="card-modern">
-          <CardHeader>
-            <CardTitle className="flex items-center space-x-3">
-              <FileSpreadsheet className="h-5 w-5 text-purple-600" />
-              <span className="bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
-                Follow-up Question Files
-              </span>
-            </CardTitle>
-          </CardHeader>
-          
-          <CardContent>
-            {followupFiles.length > 0 ? (
-              followupFiles.map((dataRequest: any, index: number) => (
-                <div key={index} className="mb-6 last:mb-0">
-                  <div className="bg-slate-50 rounded-lg p-4">
-                    <div className="flex items-center space-x-4">
-                      <div className="flex-shrink-0">
-                        <FileSpreadsheet className="h-8 w-8 text-purple-600" />
-                      </div>
-                      <div className="flex-1">
-                        <h4 className="text-sm font-medium text-slate-900">
-                          {dataRequest.fileName}
-                        </h4>
-                        <p className="text-xs text-slate-500">
-                          {(dataRequest.fileSize / 1024 / 1024).toFixed(1)} MB • {dataRequest.totalQuestions} questions • {dataRequest.categories?.length || 0} categories
-                        </p>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <Badge variant="secondary" className="bg-purple-100 text-purple-800">
-                          Follow-up
-                        </Badge>
+        {/* Follow-up Question Files - Only show if enabled in settings */}
+        {applicationData?.settings?.enableFollowUpQuestions && (
+          <Card className="card-modern">
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-3">
+                <FileSpreadsheet className="h-5 w-5 text-purple-600" />
+                <span className="bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
+                  Follow-up Question Files
+                </span>
+              </CardTitle>
+            </CardHeader>
+            
+            <CardContent>
+              {followupFiles.length > 0 ? (
+                followupFiles.map((dataRequest: any, index: number) => (
+                  <div key={index} className="mb-6 last:mb-0">
+                    <div className="bg-slate-50 rounded-lg p-4">
+                      <div className="flex items-center space-x-4">
+                        <div className="flex-shrink-0">
+                          <FileSpreadsheet className="h-8 w-8 text-purple-600" />
+                        </div>
+                        <div className="flex-1">
+                          <h4 className="text-sm font-medium text-slate-900">
+                            {dataRequest.fileName}
+                          </h4>
+                          <p className="text-xs text-slate-500">
+                            {(dataRequest.fileSize / 1024 / 1024).toFixed(1)} MB • {dataRequest.totalQuestions} questions • {dataRequest.categories?.length || 0} categories
+                          </p>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <Badge variant="secondary" className="bg-purple-100 text-purple-800">
+                            Follow-up
+                          </Badge>
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
-              ))
-            ) : (
-              <p className="text-slate-500 text-center py-8">No follow-up files uploaded yet</p>
-            )}
-          </CardContent>
-        </Card>
+                ))
+              ) : (
+                <p className="text-slate-500 text-center py-8">No follow-up files uploaded yet</p>
+              )}
+            </CardContent>
+          </Card>
+        )}
       </div>
     );
   }
@@ -514,19 +527,20 @@ export default function StepTwo({ applicationId, onNext, setCanProceed }: StepTw
         </CardContent>
       </Card>
 
-      {/* Follow-up Question File Upload */}
-      <Card className="card-modern">
-        <CardHeader>
-          <CardTitle className="flex items-center space-x-3">
-            <FileSpreadsheet className="h-5 w-5 text-green-600" />
-            <span className="bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent">
-              Follow-up Question File Upload
-            </span>
-          </CardTitle>
-          <p className="text-sm text-slate-600">
-            Upload additional Excel files for follow-up questions (optional)
-          </p>
-        </CardHeader>
+      {/* Follow-up Question File Upload - Only show if enabled in settings */}
+      {applicationData?.settings?.enableFollowUpQuestions && (
+        <Card className="card-modern">
+          <CardHeader>
+            <CardTitle className="flex items-center space-x-3">
+              <FileSpreadsheet className="h-5 w-5 text-green-600" />
+              <span className="bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent">
+                Follow-up Question File Upload
+              </span>
+            </CardTitle>
+            <p className="text-sm text-slate-600">
+              Upload additional Excel files for follow-up questions (optional)
+            </p>
+          </CardHeader>
         
         <CardContent>
           {followupFiles.map((fileState, index) => (
@@ -579,7 +593,8 @@ export default function StepTwo({ applicationId, onNext, setCanProceed }: StepTw
             </Button>
           </div>
         </CardContent>
-      </Card>
+        </Card>
+      )}
     </div>
   );
 }
