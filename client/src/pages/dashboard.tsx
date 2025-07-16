@@ -11,7 +11,8 @@ import {
   TrendingUp,
   Clock,
   CheckCircle,
-  AlertCircle
+  AlertCircle,
+  Bot
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -149,14 +150,14 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Initiate New Audit Button */}
+        {/* Create First Audit Button */}
         <div className="mb-8 text-center">
           <Button
             onClick={() => setLocation("/wizard")}
             className="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white px-8 py-6 text-lg font-medium rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105"
           >
-            <Plus className="h-6 w-6 mr-3" />
-            Initiate new audit
+            <Bot className="h-6 w-6 mr-3" />
+            Create First Audit
           </Button>
         </div>
 
@@ -209,16 +210,14 @@ export default function Dashboard() {
             </div>
           ) : (
             <div className="text-center py-12">
-              <FileText className="h-16 w-16 text-slate-300 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-slate-900 mb-2">No recent audits</h3>
-              <p className="text-slate-500 mb-6">Get started by creating your first audit application</p>
-              <Button
-                onClick={() => setLocation("/wizard")}
-                className="btn-gradient"
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                Create First Audit
-              </Button>
+              <div className="relative mb-6">
+                <Bot className="h-24 w-24 text-blue-300 mx-auto mb-4" />
+                <div className="absolute -top-2 -right-2 w-6 h-6 bg-green-500 rounded-full flex items-center justify-center">
+                  <span className="text-white text-xs font-bold">AI</span>
+                </div>
+              </div>
+              <h3 className="text-lg font-medium text-slate-900 mb-2">AI Agent Ready</h3>
+              <p className="text-slate-500 mb-6">Your intelligent audit assistant is ready to help you get started</p>
             </div>
           )}
         </div>
