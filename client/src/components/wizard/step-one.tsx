@@ -12,13 +12,13 @@ import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 
 const applicationSchema = z.object({
+  auditName: z.string().min(1, "Audit name is required"),
   name: z.string().min(1, "Application name is required"),
   startDate: z.string().min(1, "Start date is required"),
   endDate: z.string().min(1, "End date is required"),
   ciId: z.string().min(1, "CI ID is required"),
   settings: z.object({
-    enableMonitoring: z.boolean(),
-    generateLogs: z.boolean(),
+    enableFollowUpQuestions: z.boolean(),
     emailNotifications: z.boolean(),
   }),
 });
@@ -34,26 +34,27 @@ interface StepOneProps {
 
 export default function StepOne({ applicationId, setApplicationId, onNext, setCanProceed }: StepOneProps) {
   const { toast } = useToast();
+  const [isAuditInitiated, setIsAuditInitiated] = useState(false);
   
   const form = useForm<ApplicationFormData>({
     resolver: zodResolver(applicationSchema),
     defaultValues: {
+      auditName: "",
       name: "",
       startDate: "",
       endDate: "",
       ciId: "",
       settings: {
-        enableMonitoring: true,
-        generateLogs: false,
+        enableFollowUpQuestions: true,
         emailNotifications: true,
       },
     },
   });
 
-  // Always allow proceeding to next step (validation removed)
+  // Only allow proceeding to next step after audit is initiated
   useEffect(() => {
-    setCanProceed(true);
-  }, [setCanProceed]);
+    setCanProceed(isAuditInitiated);
+  }, [isAuditInitiated, setCanProceed]);
 
   const createApplicationMutation = useMutation({
     mutationFn: async (data: ApplicationFormData) => {
@@ -72,12 +73,11 @@ export default function StepOne({ applicationId, setApplicationId, onNext, setCa
     onSuccess: (data) => {
       console.log("Mutation success, application created:", data);
       setApplicationId(data.id);
+      setIsAuditInitiated(true);
       toast({
-        title: "Application created successfully",
+        title: "Audit initiated successfully",
         description: "Your audit application has been configured.",
       });
-      console.log("Calling onNext() to advance to step 2");
-      onNext();
     },
     onError: (error) => {
       console.log("Mutation error:", error);
@@ -94,26 +94,7 @@ export default function StepOne({ applicationId, setApplicationId, onNext, setCa
     createApplicationMutation.mutate(data);
   };
 
-  // Handle Next button click from navigation
-  useEffect(() => {
-    const handleNextClick = () => {
-      // Prevent multiple submissions
-      if (createApplicationMutation.isPending) {
-        console.log("Mutation already pending, skipping");
-        return;
-      }
-      
-      // Always trigger form submission, let validation handle invalid forms
-      form.handleSubmit(onSubmit)();
-    };
-    
-    // Store the handler for the parent component to call
-    (window as any).stepOneSubmit = handleNextClick;
-    
-    return () => {
-      delete (window as any).stepOneSubmit;
-    };
-  }, [form, onSubmit, createApplicationMutation.isPending]);
+  // Clean up old window-based submission logic - no longer needed with direct form button
 
   return (
     <div className="space-y-8">
@@ -135,6 +116,29 @@ export default function StepOne({ applicationId, setApplicationId, onNext, setCa
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
               <FormField
                 control={form.control}
+                name="auditName"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>
+                      Audit Name <span className="text-red-500">*</span>
+                    </FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder="Enter audit name (e.g., Q1 2024 Compliance Audit)"
+                        className="input-modern"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormDescription>
+                      Name for this audit session
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
                 name="name"
                 render={({ field }) => (
                   <FormItem>
@@ -143,13 +147,13 @@ export default function StepOne({ applicationId, setApplicationId, onNext, setCa
                     </FormLabel>
                     <FormControl>
                       <Input
-                        placeholder="Enter application name (e.g., Customer Portal Audit)"
+                        placeholder="Enter application name (e.g., Customer Portal)"
                         className="input-modern"
                         {...field}
                       />
                     </FormControl>
                     <FormDescription>
-                      This will be used to identify your audit session
+                      Application being audited
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
@@ -220,7 +224,7 @@ export default function StepOne({ applicationId, setApplicationId, onNext, setCa
                 <div className="space-y-3">
                   <FormField
                     control={form.control}
-                    name="settings.enableMonitoring"
+                    name="settings.enableFollowUpQuestions"
                     render={({ field }) => (
                       <FormItem className="flex flex-row items-center space-x-3 space-y-0">
                         <FormControl>
@@ -230,25 +234,7 @@ export default function StepOne({ applicationId, setApplicationId, onNext, setCa
                           />
                         </FormControl>
                         <FormLabel className="text-sm">
-                          Enable real-time monitoring
-                        </FormLabel>
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="settings.generateLogs"
-                    render={({ field }) => (
-                      <FormItem className="flex flex-row items-center space-x-3 space-y-0">
-                        <FormControl>
-                          <Checkbox
-                            checked={field.value}
-                            onCheckedChange={field.onChange}
-                          />
-                        </FormControl>
-                        <FormLabel className="text-sm">
-                          Generate detailed logs
+                          Enable follow-up questions
                         </FormLabel>
                       </FormItem>
                     )}
@@ -274,13 +260,33 @@ export default function StepOne({ applicationId, setApplicationId, onNext, setCa
                 </div>
               </div>
 
-              <button
-                type="submit"
-                className="hidden"
-                disabled={createApplicationMutation.isPending}
-              >
-                Submit
-              </button>
+              {/* Initiate Audit Button */}
+              <div className="flex justify-center pt-4">
+                <button
+                  type="submit"
+                  disabled={createApplicationMutation.isPending || isAuditInitiated}
+                  className="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 disabled:from-gray-400 disabled:to-gray-500 text-white px-8 py-3 rounded-xl font-medium shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105 disabled:scale-100 disabled:cursor-not-allowed"
+                >
+                  {createApplicationMutation.isPending ? (
+                    <span className="flex items-center">
+                      <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      Initiating Audit...
+                    </span>
+                  ) : isAuditInitiated ? (
+                    <span className="flex items-center">
+                      <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      </svg>
+                      Audit Initiated
+                    </span>
+                  ) : (
+                    "Initiate Audit"
+                  )}
+                </button>
+              </div>
             </form>
           </Form>
         </CardContent>
