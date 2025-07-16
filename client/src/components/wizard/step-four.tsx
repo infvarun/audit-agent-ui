@@ -154,25 +154,30 @@ export default function StepFour({ applicationId, onNext, setCanProceed }: StepF
               </motion.div>
               
               {/* Connection Lines */}
-              <svg className="absolute inset-0 w-full h-full">
+              <svg className="absolute inset-0 w-full h-full pointer-events-none">
                 <defs>
                   <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="0%">
-                    <stop offset="0%" style={{ stopColor: "#3b82f6", stopOpacity: 1 }} />
-                    <stop offset="100%" style={{ stopColor: "#1d4ed8", stopOpacity: 0.3 }} />
+                    <stop offset="0%" style={{ stopColor: "#8b5cf6", stopOpacity: 0.8 }} />
+                    <stop offset="100%" style={{ stopColor: "#3b82f6", stopOpacity: 0.4 }} />
                   </linearGradient>
                 </defs>
-                {nodes.map((node, index) => (
-                  <line
-                    key={`line-${node.id}`}
-                    x1="50%"
-                    y1="50%"
-                    x2={`${node.position.x}%`}
-                    y2={`${node.position.y}%`}
-                    stroke="url(#grad1)"
-                    strokeWidth="2"
-                    opacity={node.status === "connected" ? 1 : 0.3}
-                  />
-                ))}
+                {nodes.map((node, index) => {
+                  const centerX = 50; // Center of the container
+                  const centerY = 50; // Center of the container
+                  return (
+                    <line
+                      key={`line-${node.id}`}
+                      x1={`${centerX}%`}
+                      y1={`${centerY}%`}
+                      x2={`${node.position.x}%`}
+                      y2={`${node.position.y}%`}
+                      stroke={node.status === "connected" ? "#8b5cf6" : "#94a3b8"}
+                      strokeWidth="3"
+                      strokeDasharray={node.status === "connecting" ? "5,5" : "none"}
+                      opacity={node.status === "connected" ? 0.8 : 0.4}
+                    />
+                  );
+                })}
               </svg>
 
               {/* Connection Nodes */}
