@@ -69,8 +69,8 @@ export default function StepOne({ applicationId, setApplicationId, onNext, setCa
         endDate: existingApplication.endDate || "",
         ciId: existingApplication.ciId || "",
         settings: {
-          enableFollowUpQuestions: existingApplication.settings?.enableFollowUpQuestions ?? true,
-          emailNotifications: existingApplication.settings?.emailNotifications ?? true,
+          enableFollowUpQuestions: (existingApplication.settings as any)?.enableFollowUpQuestions ?? true,
+          emailNotifications: (existingApplication.settings as any)?.emailNotifications ?? true,
         },
       });
       setIsAuditInitiated(true); // Mark as initiated since it already exists
@@ -313,7 +313,7 @@ export default function StepOne({ applicationId, setApplicationId, onNext, setCa
               <div className="flex justify-center pt-4">
                 <button
                   type="submit"
-                  disabled={createApplicationMutation.isPending || isAuditInitiated}
+                  disabled={createApplicationMutation.isPending || (isAuditInitiated && !existingApplication)}
                   className="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 disabled:from-gray-400 disabled:to-gray-500 text-white px-8 py-3 rounded-xl font-medium shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105 disabled:scale-100 disabled:cursor-not-allowed"
                 >
                   {createApplicationMutation.isPending ? (
