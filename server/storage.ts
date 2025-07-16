@@ -28,6 +28,7 @@ export interface IStorage {
   // Data Requests
   createDataRequest(dataRequest: InsertDataRequest): Promise<DataRequest>;
   getDataRequestByApplicationId(applicationId: number): Promise<DataRequest | undefined>;
+  getDataRequestsByApplicationId(applicationId: number): Promise<DataRequest[]>;
   
   // Tool Connectors
   createToolConnector(connector: InsertToolConnector): Promise<ToolConnector>;
@@ -112,6 +113,12 @@ export class MemStorage implements IStorage {
 
   async getDataRequestByApplicationId(applicationId: number): Promise<DataRequest | undefined> {
     return Array.from(this.dataRequests.values()).find(
+      (dr) => dr.applicationId === applicationId
+    );
+  }
+
+  async getDataRequestsByApplicationId(applicationId: number): Promise<DataRequest[]> {
+    return Array.from(this.dataRequests.values()).filter(
       (dr) => dr.applicationId === applicationId
     );
   }
@@ -253,6 +260,13 @@ export class DatabaseStorage implements IStorage {
       .from(dataRequests)
       .where(eq(dataRequests.applicationId, applicationId));
     return dataRequest || undefined;
+  }
+
+  async getDataRequestsByApplicationId(applicationId: number): Promise<DataRequest[]> {
+    return await db
+      .select()
+      .from(dataRequests)
+      .where(eq(dataRequests.applicationId, applicationId));
   }
 
   async createToolConnector(insertConnector: InsertToolConnector): Promise<ToolConnector> {

@@ -54,9 +54,9 @@ export default function StepTwo({ applicationId, onNext, setCanProceed }: StepTw
   const { toast } = useToast();
 
   const { data: dataRequests, isLoading, refetch } = useQuery({
-    queryKey: ["/api/python/data-requests", applicationId],
+    queryKey: ["/api/data-requests/application", applicationId],
     queryFn: async () => {
-      const response = await fetch(`/api/python/data-requests/${applicationId}`);
+      const response = await fetch(`/api/data-requests/application/${applicationId}`);
       if (!response.ok) throw new Error("Failed to fetch data requests");
       return response.json();
     },
@@ -65,7 +65,7 @@ export default function StepTwo({ applicationId, onNext, setCanProceed }: StepTw
 
   // Check if we have processed files to allow proceeding
   useEffect(() => {
-    const hasPrimaryFile = dataRequests?.some((req: any) => req.file_type === 'primary');
+    const hasPrimaryFile = dataRequests?.some((req: any) => req.fileType === 'primary');
     setCanProceed(!!hasPrimaryFile);
   }, [dataRequests, setCanProceed]);
 
@@ -75,7 +75,7 @@ export default function StepTwo({ applicationId, onNext, setCanProceed }: StepTw
       const formData = new FormData();
       formData.append("file", file);
       
-      const response = await fetch("/api/python/get-columns", {
+      const response = await fetch("/api/excel/get-columns", {
         method: "POST",
         body: formData,
       });
@@ -126,7 +126,7 @@ export default function StepTwo({ applicationId, onNext, setCanProceed }: StepTw
       formData.append("fileType", fileType);
       formData.append("columnMappings", JSON.stringify(columnMappings));
       
-      const response = await fetch("/api/python/process-excel", {
+      const response = await fetch("/api/excel/process", {
         method: "POST",
         body: formData,
       });
@@ -351,8 +351,8 @@ export default function StepTwo({ applicationId, onNext, setCanProceed }: StepTw
 
   // Display processed files
   if (dataRequests && dataRequests.length > 0) {
-    const primaryFiles = dataRequests.filter((req: any) => req.file_type === 'primary');
-    const followupFiles = dataRequests.filter((req: any) => req.file_type === 'followup');
+    const primaryFiles = dataRequests.filter((req: any) => req.fileType === 'primary');
+    const followupFiles = dataRequests.filter((req: any) => req.fileType === 'followup');
 
     return (
       <div className="space-y-8">
@@ -377,10 +377,10 @@ export default function StepTwo({ applicationId, onNext, setCanProceed }: StepTw
                     </div>
                     <div className="flex-1">
                       <h4 className="text-sm font-medium text-slate-900">
-                        {dataRequest.file_name}
+                        {dataRequest.fileName}
                       </h4>
                       <p className="text-xs text-slate-500">
-                        {(dataRequest.file_size / 1024 / 1024).toFixed(1)} MB • {dataRequest.total_questions} questions • {dataRequest.categories?.length || 0} categories
+                        {(dataRequest.fileSize / 1024 / 1024).toFixed(1)} MB • {dataRequest.totalQuestions} questions • {dataRequest.categories?.length || 0} categories
                       </p>
                     </div>
                     <div className="flex items-center space-x-2">
@@ -401,7 +401,7 @@ export default function StepTwo({ applicationId, onNext, setCanProceed }: StepTw
                       </span>
                     </div>
                     <p className="text-2xl font-bold text-blue-900 mt-2">
-                      {dataRequest.total_questions}
+                      {dataRequest.totalQuestions}
                     </p>
                   </div>
                   <div className="bg-green-50 rounded-lg p-4">
@@ -443,10 +443,10 @@ export default function StepTwo({ applicationId, onNext, setCanProceed }: StepTw
                       </div>
                       <div className="flex-1">
                         <h4 className="text-sm font-medium text-slate-900">
-                          {dataRequest.file_name}
+                          {dataRequest.fileName}
                         </h4>
                         <p className="text-xs text-slate-500">
-                          {(dataRequest.file_size / 1024 / 1024).toFixed(1)} MB • {dataRequest.total_questions} questions • {dataRequest.categories?.length || 0} categories
+                          {(dataRequest.fileSize / 1024 / 1024).toFixed(1)} MB • {dataRequest.totalQuestions} questions • {dataRequest.categories?.length || 0} categories
                         </p>
                       </div>
                       <div className="flex items-center space-x-2">

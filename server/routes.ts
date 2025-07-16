@@ -10,6 +10,8 @@ import {
   insertAuditResultSchema 
 } from "@shared/schema";
 import { z } from "zod";
+import * as XLSX from "xlsx";
+import fs from "fs";
 
 const upload = multer({ 
   dest: 'uploads/',
@@ -68,53 +70,155 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Upload data request file
-  app.post("/api/data-requests", upload.single('file'), async (req, res) => {
+  // Get columns from Excel file
+  app.post("/api/excel/get-columns", upload.single('file'), async (req, res) => {
     try {
       if (!req.file) {
         return res.status(400).json({ error: "No file uploaded" });
       }
 
-      const { applicationId } = req.body;
+      // Read Excel file
+      const workbook = XLSX.readFile(req.file.path);
+      const sheetName = workbook.SheetNames[0];
+      const worksheet = workbook.Sheets[sheetName];
+      
+      // Get column names
+      const jsonData = XLSX.utils.sheet_to_json(worksheet);
+      const columns = jsonData.length > 0 ? Object.keys(jsonData[0]) : [];
+      
+      // Get sample data (first 3 rows)
+      const sampleData = jsonData.slice(0, 3);
+      
+      // Clean up file
+      fs.unlinkSync(req.file.path);
+      
+      res.json({
+        columns,
+        sample_data: sampleData
+      });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to process Excel file" });
+    }
+  });
+
+  // Process Excel file with column mappings
+  app.post("/api/excel/process", upload.single('file'), async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ error: "No file uploaded" });
+      }
+
+      const { applicationId, fileType, columnMappings } = req.body;
       if (!applicationId) {
         return res.status(400).json({ error: "Application ID is required" });
       }
 
-      // Mock XLSX parsing - in real implementation, use xlsx library
-      const mockQuestions = [
-        { id: "Q001", question: "What user access controls are in place?", category: "Access Control" },
-        { id: "Q002", question: "How is data encryption implemented?", category: "Data Security" },
-        { id: "Q003", question: "What backup procedures are followed?", category: "Backup & Recovery" },
-        { id: "Q004", question: "How are system logs monitored?", category: "Monitoring" },
-        { id: "Q005", question: "What incident response procedures exist?", category: "Incident Response" }
-      ];
+      let mappings;
+      try {
+        mappings = JSON.parse(columnMappings);
+      } catch (error) {
+        return res.status(400).json({ error: "Invalid column mappings" });
+      }
 
+      // Read Excel file
+      const workbook = XLSX.readFile(req.file.path);
+      const sheetName = workbook.SheetNames[0];
+      const worksheet = workbook.Sheets[sheetName];
+      const jsonData = XLSX.utils.sheet_to_json(worksheet);
+
+      // Extract column mappings
+      const questionCol = mappings.questionNumber;
+      const categoryCol = mappings.process;
+      const subcategoryCol = mappings.subProcess;
+      const questionTextCol = mappings.question;
+
+      // Validate required columns exist
+      const columns = jsonData.length > 0 ? Object.keys(jsonData[0]) : [];
+      const missingCols = [];
+      
+      if (!columns.includes(questionCol)) missingCols.push(`questionNumber -> ${questionCol}`);
+      if (!columns.includes(categoryCol)) missingCols.push(`process -> ${categoryCol}`);
+      if (!columns.includes(subcategoryCol)) missingCols.push(`subProcess -> ${subcategoryCol}`);
+      if (!columns.includes(questionTextCol)) missingCols.push(`question -> ${questionTextCol}`);
+
+      if (missingCols.length > 0) {
+        fs.unlinkSync(req.file.path);
+        return res.status(400).json({
+          error: `Missing columns: ${missingCols.join(', ')}`,
+          available_columns: columns
+        });
+      }
+
+      // Process data
+      const questions = [];
+      const categories = new Set();
+      const subcategories = new Set();
+
+      for (const row of jsonData) {
+        if (!row[questionCol] || !row[questionTextCol]) continue;
+
+        const questionNumber = String(row[questionCol]).trim();
+        const category = row[categoryCol] ? String(row[categoryCol]).trim() : "Uncategorized";
+        const subcategory = row[subcategoryCol] ? String(row[subcategoryCol]).trim() : "General";
+        const questionText = String(row[questionTextCol]).trim();
+
+        categories.add(category);
+        subcategories.add(subcategory);
+
+        questions.push({
+          id: questionNumber,
+          question: questionText,
+          category: category,
+          subcategory: subcategory
+        });
+      }
+
+      // Save to database
       const dataRequest = await storage.createDataRequest({
         applicationId: parseInt(applicationId),
         fileName: req.file.originalname,
         fileSize: req.file.size,
-        questions: mockQuestions,
-        totalQuestions: mockQuestions.length,
-        categories: [...new Set(mockQuestions.map(q => q.category))].length
+        fileType: fileType || 'primary',
+        questions: questions,
+        totalQuestions: questions.length,
+        categories: Array.from(categories),
+        subcategories: Array.from(subcategories),
+        columnMappings: mappings
       });
 
-      res.json(dataRequest);
+      // Clean up file
+      fs.unlinkSync(req.file.path);
+
+      res.json({
+        id: dataRequest.id,
+        applicationId: dataRequest.applicationId,
+        fileName: dataRequest.fileName,
+        fileSize: dataRequest.fileSize,
+        fileType: dataRequest.fileType,
+        questions: dataRequest.questions,
+        totalQuestions: dataRequest.totalQuestions,
+        categories: dataRequest.categories,
+        subcategories: dataRequest.subcategories,
+        categoryCount: Array.from(categories).length,
+        subcategoryCount: Array.from(subcategories).length,
+        columnMappings: dataRequest.columnMappings
+      });
     } catch (error) {
-      res.status(500).json({ error: "Failed to process file upload" });
+      if (req.file) {
+        fs.unlinkSync(req.file.path);
+      }
+      res.status(500).json({ error: "Failed to process Excel file" });
     }
   });
 
-  // Get data request by application ID
+  // Get data requests by application ID
   app.get("/api/data-requests/application/:applicationId", async (req, res) => {
     try {
       const applicationId = parseInt(req.params.applicationId);
-      const dataRequest = await storage.getDataRequestByApplicationId(applicationId);
-      if (!dataRequest) {
-        return res.status(404).json({ error: "Data request not found" });
-      }
-      res.json(dataRequest);
+      const dataRequests = await storage.getDataRequestsByApplicationId(applicationId);
+      res.json(dataRequests);
     } catch (error) {
-      res.status(500).json({ error: "Failed to fetch data request" });
+      res.status(500).json({ error: "Failed to fetch data requests" });
     }
   });
 
