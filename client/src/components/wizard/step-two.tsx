@@ -467,8 +467,8 @@ export default function StepTwo({ applicationId, onNext, setCanProceed }: StepTw
             </CardHeader>
             
             <CardContent>
-              {followupFiles.length > 0 ? (
-                followupFiles.map((dataRequest: any, index: number) => (
+              {dataRequests?.filter((req: any) => req.fileType === 'followup').length > 0 ? (
+                dataRequests.filter((req: any) => req.fileType === 'followup').map((dataRequest: any, index: number) => (
                   <div key={index} className="mb-6 last:mb-0">
                     <div className="bg-slate-50 rounded-lg p-4">
                       <div className="flex items-center space-x-4">
