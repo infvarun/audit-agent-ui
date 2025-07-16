@@ -21,7 +21,7 @@ export default function Navigation({
       <Button
         variant="outline"
         onClick={onPrevious}
-        disabled={currentStep === 1}
+        disabled={false}
         className="flex items-center space-x-2 btn-gradient-outline"
       >
         <ChevronLeft className="h-4 w-4" />
@@ -36,7 +36,7 @@ export default function Navigation({
       
       <Button
         onClick={onNext}
-        disabled={!canProceed}
+        disabled={false}
         className="flex items-center space-x-2 btn-gradient"
       >
         <span>{currentStep === totalSteps ? "Finish" : "Next"}</span>

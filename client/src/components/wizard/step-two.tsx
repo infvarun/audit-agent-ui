@@ -21,10 +21,10 @@ export default function StepTwo({ applicationId, onNext, setCanProceed }: StepTw
     enabled: !!applicationId,
   });
 
-  // Enable next button if data request exists or file is selected
+  // Always allow proceeding to next step (validation removed)
   useEffect(() => {
-    setCanProceed(!!dataRequest || !!selectedFile);
-  }, [dataRequest, selectedFile, setCanProceed]);
+    setCanProceed(true);
+  }, [setCanProceed]);
 
   const uploadMutation = useMutation({
     mutationFn: async (file: File) => {

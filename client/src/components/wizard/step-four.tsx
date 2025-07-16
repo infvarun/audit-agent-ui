@@ -68,14 +68,10 @@ export default function StepFour({ applicationId, onNext, setCanProceed }: StepF
     }
   }, []);
 
+  // Always allow proceeding to next step (validation removed)
   useEffect(() => {
-    if (session?.status === "completed") {
-      setCanProceed(true);
-      setTimeout(() => {
-        onNext();
-      }, 2000);
-    }
-  }, [session?.status, onNext, setCanProceed]);
+    setCanProceed(true);
+  }, [setCanProceed]);
 
   // Animate nodes based on progress
   useEffect(() => {

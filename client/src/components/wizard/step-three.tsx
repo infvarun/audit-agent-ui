@@ -171,14 +171,10 @@ export default function StepThree({ applicationId, onNext, setCanProceed }: Step
     }
   };
 
-  const allConnectorsConfigured = connectorConfigs.every(config => 
-    getConnectorStatus(config.type) === "connected"
-  );
-
-  // Enable next button when all connectors are configured
+  // Always allow proceeding to next step (validation removed)
   useEffect(() => {
-    setCanProceed(allConnectorsConfigured);
-  }, [allConnectorsConfigured, setCanProceed]);
+    setCanProceed(true);
+  }, [setCanProceed]);
 
   return (
     <div className="space-y-8">

@@ -50,13 +50,10 @@ export default function StepOne({ applicationId, setApplicationId, onNext, setCa
     },
   });
 
-  // Watch form values to enable/disable next button
-  const watchedValues = form.watch();
+  // Always allow proceeding to next step (validation removed)
   useEffect(() => {
-    const { name, startDate, endDate, ciId } = watchedValues;
-    const isValid = Boolean(name && startDate && endDate && ciId) && !form.formState.isSubmitting;
-    setCanProceed(isValid);
-  }, [watchedValues, form.formState.isSubmitting, setCanProceed]);
+    setCanProceed(true);
+  }, [setCanProceed]);
 
   const createApplicationMutation = useMutation({
     mutationFn: async (data: ApplicationFormData) => {

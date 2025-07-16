@@ -18,8 +18,9 @@ export default function StepFive({ applicationId, setCanProceed }: StepFiveProps
   });
 
   // Step 5 is the final step, no next button needed
+  // Always allow proceeding (validation removed)
   useEffect(() => {
-    setCanProceed(false);
+    setCanProceed(true);
   }, [setCanProceed]);
 
   const completed = auditResults.filter((r: any) => r.status === "completed").length;
