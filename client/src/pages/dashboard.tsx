@@ -124,11 +124,14 @@ export default function Dashboard() {
                         <div className="flex items-center space-x-4 text-sm text-slate-600">
                           <span className="flex items-center">
                             <Calendar className="h-3 w-3 mr-1" />
-                            {new Date(app.auditPeriodStart).getFullYear()}-{new Date(app.auditPeriodEnd).getFullYear()}
+                            {app.startDate && app.endDate ? 
+                              `${new Date(app.startDate).toLocaleDateString()} - ${new Date(app.endDate).toLocaleDateString()}` : 
+                              'Date not set'
+                            }
                           </span>
                           <span className="flex items-center">
                             <Clock className="h-3 w-3 mr-1" />
-                            {new Date(app.createdAt).toLocaleDateString()}
+                            {app.createdAt ? new Date(app.createdAt).toLocaleDateString() : 'Recently created'}
                           </span>
                         </div>
                       </div>
@@ -198,9 +201,12 @@ export default function Dashboard() {
                   <CardContent>
                     <h3 className="font-semibold text-white mb-2">Primary audit details</h3>
                     <p className="text-blue-100 text-sm leading-relaxed">
-                      Audit period: {new Date(app.auditPeriodStart).getFullYear()}-{new Date(app.auditPeriodEnd).getFullYear()}
+                      Audit period: {app.startDate && app.endDate ? 
+                        `${new Date(app.startDate).toLocaleDateString()} - ${new Date(app.endDate).toLocaleDateString()}` : 
+                        'Date not set'
+                      }
                       <br />
-                      Created: {new Date(app.createdAt).toLocaleDateString()}
+                      Created: {app.createdAt ? new Date(app.createdAt).toLocaleDateString() : 'Recently created'}
                       <br />
                       Status: In Progress
                     </p>
