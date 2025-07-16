@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { Rocket } from "lucide-react";
 import { z } from "zod";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { Application } from "@shared/schema";
 
 const applicationSchema = z.object({
   auditName: z.string().min(1, "Audit name is required"),
@@ -36,6 +37,12 @@ export default function StepOne({ applicationId, setApplicationId, onNext, setCa
   const { toast } = useToast();
   const [isAuditInitiated, setIsAuditInitiated] = useState(false);
   
+  // Query to fetch existing application data
+  const { data: existingApplication, isLoading: isLoadingApplication } = useQuery<Application>({
+    queryKey: [`/api/applications/${applicationId}`],
+    enabled: !!applicationId,
+  });
+  
   const form = useForm<ApplicationFormData>({
     resolver: zodResolver(applicationSchema),
     defaultValues: {
@@ -51,6 +58,25 @@ export default function StepOne({ applicationId, setApplicationId, onNext, setCa
     },
   });
 
+  // Populate form with existing application data
+  useEffect(() => {
+    if (existingApplication) {
+      console.log("Populating form with existing application data:", existingApplication);
+      form.reset({
+        auditName: existingApplication.auditName || "",
+        name: existingApplication.name || "",
+        startDate: existingApplication.startDate || "",
+        endDate: existingApplication.endDate || "",
+        ciId: existingApplication.ciId || "",
+        settings: {
+          enableFollowUpQuestions: existingApplication.settings?.enableFollowUpQuestions ?? true,
+          emailNotifications: existingApplication.settings?.emailNotifications ?? true,
+        },
+      });
+      setIsAuditInitiated(true); // Mark as initiated since it already exists
+    }
+  }, [existingApplication, form]);
+
   // Only allow proceeding to next step after audit is initiated
   useEffect(() => {
     setCanProceed(isAuditInitiated);
@@ -60,7 +86,9 @@ export default function StepOne({ applicationId, setApplicationId, onNext, setCa
     mutationFn: async (data: ApplicationFormData) => {
       try {
         console.log("Making API request with data:", data);
-        const response = await apiRequest("POST", "/api/applications", data);
+        const method = existingApplication ? "PUT" : "POST";
+        const url = existingApplication ? `/api/applications/${existingApplication.id}` : "/api/applications";
+        const response = await apiRequest(method, url, data);
         console.log("Response received:", response.status, response.ok);
         const result = await response.json();
         console.log("Response JSON:", result);
@@ -71,12 +99,12 @@ export default function StepOne({ applicationId, setApplicationId, onNext, setCa
       }
     },
     onSuccess: (data) => {
-      console.log("Mutation success, application created:", data);
+      console.log("Mutation success, application created/updated:", data);
       setApplicationId(data.id);
       setIsAuditInitiated(true);
       toast({
-        title: "Audit initiated successfully",
-        description: "Your audit application has been configured.",
+        title: existingApplication ? "Application updated successfully" : "Audit initiated successfully",
+        description: existingApplication ? "Your audit application has been updated." : "Your audit application has been configured.",
       });
     },
     onError: (error) => {
@@ -95,6 +123,27 @@ export default function StepOne({ applicationId, setApplicationId, onNext, setCa
   };
 
   // Clean up old window-based submission logic - no longer needed with direct form button
+
+  // Show loading state while fetching existing application
+  if (isLoadingApplication) {
+    return (
+      <div className="space-y-8">
+        <Card className="card-modern">
+          <CardContent className="p-8">
+            <div className="animate-pulse space-y-4">
+              <div className="h-4 bg-slate-200 rounded w-3/4"></div>
+              <div className="h-10 bg-slate-200 rounded"></div>
+              <div className="h-10 bg-slate-200 rounded"></div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="h-10 bg-slate-200 rounded"></div>
+                <div className="h-10 bg-slate-200 rounded"></div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8">
@@ -280,10 +329,10 @@ export default function StepOne({ applicationId, setApplicationId, onNext, setCa
                       <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                       </svg>
-                      Audit Initiated
+                      {existingApplication ? "Application Updated" : "Audit Initiated"}
                     </span>
                   ) : (
-                    "Initiate Audit"
+                    existingApplication ? "Update Application" : "Initiate Audit"
                   )}
                 </button>
               </div>

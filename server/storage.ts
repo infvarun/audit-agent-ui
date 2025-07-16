@@ -23,6 +23,7 @@ export interface IStorage {
   createApplication(application: InsertApplication): Promise<Application>;
   getApplication(id: number): Promise<Application | undefined>;
   getAllApplications(): Promise<Application[]>;
+  updateApplication(id: number, application: InsertApplication): Promise<Application | undefined>;
   
   // Data Requests
   createDataRequest(dataRequest: InsertDataRequest): Promise<DataRequest>;
@@ -79,6 +80,23 @@ export class MemStorage implements IStorage {
 
   async getAllApplications(): Promise<Application[]> {
     return Array.from(this.applications.values());
+  }
+
+  async updateApplication(id: number, insertApplication: InsertApplication): Promise<Application | undefined> {
+    const existing = this.applications.get(id);
+    if (!existing) {
+      return undefined;
+    }
+    
+    const updatedApplication: Application = {
+      ...existing,
+      ...insertApplication,
+      id,
+      createdAt: existing.createdAt, // Keep original creation date
+    };
+    
+    this.applications.set(id, updatedApplication);
+    return updatedApplication;
   }
 
   async createDataRequest(insertDataRequest: InsertDataRequest): Promise<DataRequest> {
@@ -210,6 +228,15 @@ export class DatabaseStorage implements IStorage {
 
   async getAllApplications(): Promise<Application[]> {
     return await db.select().from(applications);
+  }
+
+  async updateApplication(id: number, insertApplication: InsertApplication): Promise<Application | undefined> {
+    const [updatedApplication] = await db
+      .update(applications)
+      .set(insertApplication)
+      .where(eq(applications.id, id))
+      .returning();
+    return updatedApplication || undefined;
   }
 
   async createDataRequest(insertDataRequest: InsertDataRequest): Promise<DataRequest> {
