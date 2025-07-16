@@ -382,14 +382,15 @@ export default function StepTwo({ applicationId, onNext, setCanProceed }: StepTw
     );
   };
 
-  // Display processed files
-  if (dataRequests && dataRequests.length > 0) {
-    const primaryFiles = dataRequests.filter((req: any) => req.fileType === 'primary');
-    const followupFiles = dataRequests.filter((req: any) => req.fileType === 'followup');
+  // Get processed files for display
+  const processedPrimaryFiles = dataRequests?.filter((req: any) => req.fileType === 'primary') || [];
+  const processedFollowupFiles = dataRequests?.filter((req: any) => req.fileType === 'followup') || [];
 
-    return (
-      <div className="space-y-8">
-        {/* Primary Data Request Files */}
+  // Processed files section component
+  const ProcessedFilesSection = () => (
+    <>
+      {/* Primary Data Request Files */}
+      {processedPrimaryFiles.length > 0 && (
         <Card className="card-modern">
           <CardHeader>
             <CardTitle className="flex items-center space-x-3">
@@ -401,7 +402,7 @@ export default function StepTwo({ applicationId, onNext, setCanProceed }: StepTw
           </CardHeader>
           
           <CardContent>
-            {primaryFiles.map((dataRequest: any, index: number) => (
+            {processedPrimaryFiles.map((dataRequest: any, index: number) => (
               <div key={index} className="mb-6 last:mb-0">
                 <div className="bg-slate-50 rounded-lg p-4">
                   <div className="flex items-center space-x-4">
@@ -453,103 +454,108 @@ export default function StepTwo({ applicationId, onNext, setCanProceed }: StepTw
             ))}
           </CardContent>
         </Card>
+      )}
 
-        {/* Follow-up Question Files - Only show if enabled in settings */}
-        {applicationData?.settings?.enableFollowUpQuestions && (
-          <Card className="card-modern">
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-3">
-                <FileSpreadsheet className="h-5 w-5 text-purple-600" />
-                <span className="bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
-                  Follow-up Question Files
-                </span>
-              </CardTitle>
-            </CardHeader>
-            
-            <CardContent>
-              {dataRequests?.filter((req: any) => req.fileType === 'followup').length > 0 ? (
-                dataRequests.filter((req: any) => req.fileType === 'followup').map((dataRequest: any, index: number) => (
-                  <div key={index} className="mb-6 last:mb-0">
-                    <div className="bg-slate-50 rounded-lg p-4">
-                      <div className="flex items-center space-x-4">
-                        <div className="flex-shrink-0">
-                          <FileSpreadsheet className="h-8 w-8 text-purple-600" />
-                        </div>
-                        <div className="flex-1">
-                          <h4 className="text-sm font-medium text-slate-900">
-                            {dataRequest.fileName}
-                          </h4>
-                          <p className="text-xs text-slate-500">
-                            {(dataRequest.fileSize / 1024 / 1024).toFixed(1)} MB • {dataRequest.totalQuestions} questions • {dataRequest.categories?.length || 0} categories
-                          </p>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <Badge variant="secondary" className="bg-purple-100 text-purple-800">
-                            Follow-up
-                          </Badge>
-                        </div>
+      {/* Follow-up Question Files - Only show if enabled in settings */}
+      {applicationData?.settings?.enableFollowUpQuestions && (
+        <Card className="card-modern">
+          <CardHeader>
+            <CardTitle className="flex items-center space-x-3">
+              <FileSpreadsheet className="h-5 w-5 text-purple-600" />
+              <span className="bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
+                Follow-up Question Files
+              </span>
+            </CardTitle>
+          </CardHeader>
+          
+          <CardContent>
+            {processedFollowupFiles.length > 0 ? (
+              processedFollowupFiles.map((dataRequest: any, index: number) => (
+                <div key={index} className="mb-6 last:mb-0">
+                  <div className="bg-slate-50 rounded-lg p-4">
+                    <div className="flex items-center space-x-4">
+                      <div className="flex-shrink-0">
+                        <FileSpreadsheet className="h-8 w-8 text-purple-600" />
+                      </div>
+                      <div className="flex-1">
+                        <h4 className="text-sm font-medium text-slate-900">
+                          {dataRequest.fileName}
+                        </h4>
+                        <p className="text-xs text-slate-500">
+                          {(dataRequest.fileSize / 1024 / 1024).toFixed(1)} MB • {dataRequest.totalQuestions} questions • {dataRequest.categories?.length || 0} categories
+                        </p>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Badge variant="secondary" className="bg-purple-100 text-purple-800">
+                          Follow-up
+                        </Badge>
                       </div>
                     </div>
                   </div>
-                ))
-              ) : (
-                <p className="text-slate-500 text-center py-8">No follow-up files uploaded yet</p>
-              )}
-            </CardContent>
-          </Card>
-        )}
-      </div>
-    );
-  }
+                </div>
+              ))
+            ) : (
+              <p className="text-slate-500 text-center py-8">No follow-up files uploaded yet</p>
+            )}
+          </CardContent>
+        </Card>
+      )}
+    </>
+  );
 
   return (
     <div className="space-y-8">
-      {/* Primary Data Request File Upload */}
-      <Card className="card-modern">
-        <CardHeader>
-          <CardTitle className="flex items-center space-x-3">
-            <FileSpreadsheet className="h-5 w-5 text-purple-600" />
-            <span className="bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
-              Primary Data Request File Upload
-            </span>
-          </CardTitle>
-          <p className="text-sm text-slate-600">
-            Upload the main Excel file containing audit questions and requirements
-          </p>
-        </CardHeader>
-        
-        <CardContent>
-          {/* File Upload Zone */}
-          <div className="border-2 border-dashed border-purple-300 rounded-lg p-8 text-center hover:border-purple-500 hover:bg-purple-50/50 transition-all duration-300">
-            <Upload className="mx-auto h-12 w-12 text-purple-400 mb-4" />
-            <h3 className="text-lg font-medium text-slate-900 mb-2">
-              Drop your Excel file here
-            </h3>
-            <p className="text-sm text-slate-500 mb-4">
-              or click to browse files
+      {/* Show processed files first */}
+      <ProcessedFilesSection />
+
+      {/* Primary Data Request File Upload - Only show if no processed primary files */}
+      {processedPrimaryFiles.length === 0 && (
+        <Card className="card-modern">
+          <CardHeader>
+            <CardTitle className="flex items-center space-x-3">
+              <FileSpreadsheet className="h-5 w-5 text-purple-600" />
+              <span className="bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
+                Primary Data Request File Upload
+              </span>
+            </CardTitle>
+            <p className="text-sm text-slate-600">
+              Upload the main Excel file containing audit questions and requirements
             </p>
-            <div className="relative">
-              <input
-                type="file"
-                accept=".xlsx,.xls"
-                onChange={(e) => handleFileSelect(e, 'primary')}
-                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-              />
-              <Button variant="outline" className="btn-gradient-outline">Select File</Button>
+          </CardHeader>
+          
+          <CardContent>
+            {/* File Upload Zone */}
+            <div className="border-2 border-dashed border-purple-300 rounded-lg p-8 text-center hover:border-purple-500 hover:bg-purple-50/50 transition-all duration-300">
+              <Upload className="mx-auto h-12 w-12 text-purple-400 mb-4" />
+              <h3 className="text-lg font-medium text-slate-900 mb-2">
+                Drop your Excel file here
+              </h3>
+              <p className="text-sm text-slate-500 mb-4">
+                or click to browse files
+              </p>
+              <div className="relative">
+                <input
+                  type="file"
+                  accept=".xlsx,.xls"
+                  onChange={(e) => handleFileSelect(e, 'primary')}
+                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                />
+                <Button variant="outline" className="btn-gradient-outline">Select File</Button>
+              </div>
+              <p className="text-xs text-slate-400 mt-4">
+                Supported formats: .xlsx, .xls (Max size: 10MB)
+              </p>
             </div>
-            <p className="text-xs text-slate-400 mt-4">
-              Supported formats: .xlsx, .xls (Max size: 10MB)
-            </p>
-          </div>
 
-          {/* Column Mapping for Primary File */}
-          {showColumnMapping && processingFile === 'primary' && (
-            <ColumnMappingForm fileState={primaryFile} fileType="primary" />
-          )}
-        </CardContent>
-      </Card>
+            {/* Column Mapping for Primary File */}
+            {showColumnMapping && processingFile === 'primary' && (
+              <ColumnMappingForm fileState={primaryFile} fileType="primary" />
+            )}
+          </CardContent>
+        </Card>
+      )}
 
-      {/* Follow-up Question File Upload - Only show if enabled in settings */}
+      {/* Follow-up Question File Upload - Always show if enabled in settings */}
       {applicationData?.settings?.enableFollowUpQuestions && (
         <Card className="card-modern">
           <CardHeader>
