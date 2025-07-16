@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
-import { apiRequest } from "@/lib/queryClient";
+import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { Application } from "@shared/schema";
 
@@ -102,6 +102,11 @@ export default function StepOne({ applicationId, setApplicationId, onNext, setCa
       console.log("Mutation success, application created/updated:", data);
       setApplicationId(data.id);
       setIsAuditInitiated(true);
+      
+      // Invalidate relevant caches to ensure Step 2 sees the updated application
+      queryClient.invalidateQueries({ queryKey: ["/api/applications", data.id] });
+      queryClient.invalidateQueries({ queryKey: [`/api/applications/${data.id}`] });
+      
       toast({
         title: existingApplication ? "Application updated successfully" : "Audit initiated successfully",
         description: existingApplication ? "Your audit application has been updated." : "Your audit application has been configured.",

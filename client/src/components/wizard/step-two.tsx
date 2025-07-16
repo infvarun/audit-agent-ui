@@ -65,7 +65,7 @@ export default function StepTwo({ applicationId, onNext, setCanProceed }: StepTw
 
   // Get application data to check follow-up questions setting
   const { data: applicationData } = useQuery({
-    queryKey: ["/api/applications", applicationId],
+    queryKey: [`/api/applications/${applicationId}`],
     queryFn: async () => {
       const response = await fetch(`/api/applications/${applicationId}`);
       if (!response.ok) throw new Error("Failed to fetch application");
@@ -79,6 +79,28 @@ export default function StepTwo({ applicationId, onNext, setCanProceed }: StepTw
     const hasPrimaryFile = dataRequests?.some((req: any) => req.fileType === 'primary');
     setCanProceed(!!hasPrimaryFile);
   }, [dataRequests, setCanProceed]);
+
+  // Initialize follow-up files when enabled in settings
+  useEffect(() => {
+    if (applicationData?.settings?.enableFollowUpQuestions && followupFiles.length === 0) {
+      // Add one initial follow-up file slot
+      setFollowupFiles([{
+        file: null,
+        columns: [],
+        sampleData: [],
+        columnMappings: {
+          questionNumber: '',
+          process: '',
+          subProcess: '',
+          question: ''
+        },
+        isProcessing: false
+      }]);
+    } else if (!applicationData?.settings?.enableFollowUpQuestions) {
+      // Clear follow-up files when disabled
+      setFollowupFiles([]);
+    }
+  }, [applicationData?.settings?.enableFollowUpQuestions, followupFiles.length]);
 
   // Get columns from uploaded Excel file
   const getColumnsMutation = useMutation({
