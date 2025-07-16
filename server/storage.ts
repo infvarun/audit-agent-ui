@@ -15,6 +15,8 @@ import {
   type AuditResult,
   type InsertAuditResult
 } from "@shared/schema";
+import { db } from "./db";
+import { eq } from "drizzle-orm";
 
 export interface IStorage {
   // Applications
@@ -188,4 +190,117 @@ export class MemStorage implements IStorage {
   }
 }
 
-export const storage = new MemStorage();
+// Database-backed storage implementation
+export class DatabaseStorage implements IStorage {
+  async createApplication(insertApplication: InsertApplication): Promise<Application> {
+    const [application] = await db
+      .insert(applications)
+      .values(insertApplication)
+      .returning();
+    return application;
+  }
+
+  async getApplication(id: number): Promise<Application | undefined> {
+    const [application] = await db
+      .select()
+      .from(applications)
+      .where(eq(applications.id, id));
+    return application || undefined;
+  }
+
+  async getAllApplications(): Promise<Application[]> {
+    return await db.select().from(applications);
+  }
+
+  async createDataRequest(insertDataRequest: InsertDataRequest): Promise<DataRequest> {
+    const [dataRequest] = await db
+      .insert(dataRequests)
+      .values(insertDataRequest)
+      .returning();
+    return dataRequest;
+  }
+
+  async getDataRequestByApplicationId(applicationId: number): Promise<DataRequest | undefined> {
+    const [dataRequest] = await db
+      .select()
+      .from(dataRequests)
+      .where(eq(dataRequests.applicationId, applicationId));
+    return dataRequest || undefined;
+  }
+
+  async createToolConnector(insertConnector: InsertToolConnector): Promise<ToolConnector> {
+    const [connector] = await db
+      .insert(toolConnectors)
+      .values(insertConnector)
+      .returning();
+    return connector;
+  }
+
+  async getToolConnectorsByApplicationId(applicationId: number): Promise<ToolConnector[]> {
+    return await db
+      .select()
+      .from(toolConnectors)
+      .where(eq(toolConnectors.applicationId, applicationId));
+  }
+
+  async updateToolConnectorStatus(id: number, status: string): Promise<void> {
+    await db
+      .update(toolConnectors)
+      .set({ status })
+      .where(eq(toolConnectors.id, id));
+  }
+
+  async createDataCollectionSession(insertSession: InsertDataCollectionSession): Promise<DataCollectionSession> {
+    const [session] = await db
+      .insert(dataCollectionSessions)
+      .values(insertSession)
+      .returning();
+    return session;
+  }
+
+  async getDataCollectionSessionByApplicationId(applicationId: number): Promise<DataCollectionSession | undefined> {
+    const [session] = await db
+      .select()
+      .from(dataCollectionSessions)
+      .where(eq(dataCollectionSessions.applicationId, applicationId));
+    return session || undefined;
+  }
+
+  async updateSessionProgress(id: number, progress: number, logs: any[]): Promise<void> {
+    await db
+      .update(dataCollectionSessions)
+      .set({ progress, logs })
+      .where(eq(dataCollectionSessions.id, id));
+  }
+
+  async updateSessionStatus(id: number, status: string): Promise<void> {
+    await db
+      .update(dataCollectionSessions)
+      .set({ status })
+      .where(eq(dataCollectionSessions.id, id));
+  }
+
+  async createAuditResult(insertResult: InsertAuditResult): Promise<AuditResult> {
+    const [result] = await db
+      .insert(auditResults)
+      .values(insertResult)
+      .returning();
+    return result;
+  }
+
+  async getAuditResultsByApplicationId(applicationId: number): Promise<AuditResult[]> {
+    return await db
+      .select()
+      .from(auditResults)
+      .where(eq(auditResults.applicationId, applicationId));
+  }
+
+  async updateAuditResultStatus(id: number, status: string, documentPath?: string): Promise<void> {
+    await db
+      .update(auditResults)
+      .set({ status, ...(documentPath && { documentPath }) })
+      .where(eq(auditResults.id, id));
+  }
+}
+
+export const storage = new DatabaseStorage();
