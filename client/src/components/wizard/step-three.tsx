@@ -239,13 +239,11 @@ export default function StepThree({ applicationId, onNext, setCanProceed }: Step
             })}
           </div>
           
-          {allConnectorsConfigured && (
-            <div className="mt-6 p-4 bg-green-50 rounded-lg">
-              <p className="text-sm text-green-800">
-                All connectors have been configured successfully! You can now proceed to data collection.
-              </p>
-            </div>
-          )}
+          <div className="mt-6 p-4 bg-green-50 rounded-lg">
+            <p className="text-sm text-green-800">
+              Configure any connectors you need for your audit. You can proceed to data collection at any time.
+            </p>
+          </div>
         </CardContent>
       </Card>
     </div>
