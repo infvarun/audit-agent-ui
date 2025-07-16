@@ -95,3 +95,17 @@ Preferred communication style: Simple, everyday language.
 - Static file serving integrated with Express
 
 The application follows a monorepo structure with shared TypeScript types and schemas, enabling type safety across the full stack while maintaining clear separation between frontend and backend concerns.
+
+## Recent Changes: Latest modifications with dates
+
+### July 16, 2025 - Dashboard and Navigation System
+- **Added comprehensive dashboard landing page** with search functionality for existing applications
+- **Implemented navigation between dashboard and wizard** with URL-based routing
+- **Added "Recent Audits" section** with card-based display of recent applications
+- **Created unified navigation header** with back button, logo, settings, and user avatar
+- **Added application search feature** with real-time filtering by name or CI ID
+- **Implemented "Initiate new audit" button** for starting fresh audit processes
+- **Added URL parameter support** for editing existing applications (`/wizard/:applicationId`)
+- **Enhanced wizard with context awareness** - shows existing application name in header
+- **Added API routes for fetching all applications** and individual application details
+- **Removed form validation from all wizard steps** to allow free navigation for testing

@@ -18,6 +18,16 @@ const upload = multer({
 
 export async function registerRoutes(app: Express): Promise<Server> {
   
+  // Get all applications
+  app.get("/api/applications", async (req, res) => {
+    try {
+      const applications = await storage.getAllApplications();
+      res.json(applications);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch applications" });
+    }
+  });
+
   // Create application
   app.post("/api/applications", async (req, res) => {
     try {

@@ -20,6 +20,7 @@ export interface IStorage {
   // Applications
   createApplication(application: InsertApplication): Promise<Application>;
   getApplication(id: number): Promise<Application | undefined>;
+  getAllApplications(): Promise<Application[]>;
   
   // Data Requests
   createDataRequest(dataRequest: InsertDataRequest): Promise<DataRequest>;
@@ -72,6 +73,10 @@ export class MemStorage implements IStorage {
 
   async getApplication(id: number): Promise<Application | undefined> {
     return this.applications.get(id);
+  }
+
+  async getAllApplications(): Promise<Application[]> {
+    return Array.from(this.applications.values());
   }
 
   async createDataRequest(insertDataRequest: InsertDataRequest): Promise<DataRequest> {
