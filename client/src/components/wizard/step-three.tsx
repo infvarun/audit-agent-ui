@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { Settings } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -11,7 +12,9 @@ interface StepThreeProps {
 
 export default function StepThree({ applicationId, onNext, setCanProceed }: StepThreeProps) {
   // Set can proceed to true by default since step is blank
-  setCanProceed(true);
+  useEffect(() => {
+    setCanProceed(true);
+  }, [setCanProceed]);
 
   return (
     <div className="max-w-4xl mx-auto">
