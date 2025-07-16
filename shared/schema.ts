@@ -32,11 +32,14 @@ export const dataRequests = pgTable("data_requests", {
 export const toolConnectors = pgTable("tool_connectors", {
   id: serial("id").primaryKey(),
   applicationId: integer("application_id").references(() => applications.id),
+  ciId: text("ci_id").notNull(),
   connectorType: text("connector_type").notNull(),
   configuration: json("configuration").notNull(),
   status: text("status").notNull().default("pending"),
   createdAt: timestamp("created_at").defaultNow(),
-});
+}, (table) => ({
+  uniqueCiConnectorType: uniqueIndex("unique_ci_connector_type").on(table.ciId, table.connectorType),
+}));
 
 export const dataCollectionSessions = pgTable("data_collection_sessions", {
   id: serial("id").primaryKey(),

@@ -33,7 +33,10 @@ export interface IStorage {
   // Tool Connectors
   createToolConnector(connector: InsertToolConnector): Promise<ToolConnector>;
   getToolConnectorsByApplicationId(applicationId: number): Promise<ToolConnector[]>;
+  getToolConnectorsByCiId(ciId: string): Promise<ToolConnector[]>;
   updateToolConnectorStatus(id: number, status: string): Promise<void>;
+  updateToolConnector(id: number, connector: InsertToolConnector): Promise<ToolConnector | undefined>;
+  deleteToolConnector(id: number): Promise<void>;
   
   // Data Collection Sessions
   createDataCollectionSession(session: InsertDataCollectionSession): Promise<DataCollectionSession>;
@@ -140,12 +143,39 @@ export class MemStorage implements IStorage {
     );
   }
 
+  async getToolConnectorsByCiId(ciId: string): Promise<ToolConnector[]> {
+    return Array.from(this.toolConnectors.values()).filter(
+      (tc) => tc.ciId === ciId
+    );
+  }
+
   async updateToolConnectorStatus(id: number, status: string): Promise<void> {
     const connector = this.toolConnectors.get(id);
     if (connector) {
       connector.status = status;
       this.toolConnectors.set(id, connector);
     }
+  }
+
+  async updateToolConnector(id: number, insertConnector: InsertToolConnector): Promise<ToolConnector | undefined> {
+    const existing = this.toolConnectors.get(id);
+    if (!existing) {
+      return undefined;
+    }
+    
+    const updated: ToolConnector = {
+      ...existing,
+      ...insertConnector,
+      id,
+      createdAt: existing.createdAt,
+    };
+    
+    this.toolConnectors.set(id, updated);
+    return updated;
+  }
+
+  async deleteToolConnector(id: number): Promise<void> {
+    this.toolConnectors.delete(id);
   }
 
   async createDataCollectionSession(insertSession: InsertDataCollectionSession): Promise<DataCollectionSession> {
@@ -284,10 +314,32 @@ export class DatabaseStorage implements IStorage {
       .where(eq(toolConnectors.applicationId, applicationId));
   }
 
+  async getToolConnectorsByCiId(ciId: string): Promise<ToolConnector[]> {
+    return await db
+      .select()
+      .from(toolConnectors)
+      .where(eq(toolConnectors.ciId, ciId));
+  }
+
   async updateToolConnectorStatus(id: number, status: string): Promise<void> {
     await db
       .update(toolConnectors)
       .set({ status })
+      .where(eq(toolConnectors.id, id));
+  }
+
+  async updateToolConnector(id: number, insertConnector: InsertToolConnector): Promise<ToolConnector | undefined> {
+    const [updated] = await db
+      .update(toolConnectors)
+      .set(insertConnector)
+      .where(eq(toolConnectors.id, id))
+      .returning();
+    return updated || undefined;
+  }
+
+  async deleteToolConnector(id: number): Promise<void> {
+    await db
+      .delete(toolConnectors)
       .where(eq(toolConnectors.id, id));
   }
 

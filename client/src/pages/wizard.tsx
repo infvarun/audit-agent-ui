@@ -95,10 +95,12 @@ export default function WizardPage() {
 
             {/* Right side actions */}
             <div className="flex items-center space-x-4">
-              <Button variant="ghost" size="sm" className="text-slate-600">
-                <Settings className="h-4 w-4 mr-2" />
-                Settings
-              </Button>
+              <Link href="/settings">
+                <Button variant="ghost" size="sm" className="text-slate-600 hover:text-slate-900">
+                  <Settings className="h-4 w-4 mr-2" />
+                  Settings
+                </Button>
+              </Link>
               <Avatar className="h-8 w-8">
                 <AvatarFallback className="bg-gradient-to-br from-purple-600 to-blue-600 text-white text-sm">
                   <User className="h-4 w-4" />

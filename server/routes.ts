@@ -271,6 +271,54 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get tool connectors by CI ID
+  app.get("/api/connectors/ci/:ciId", async (req, res) => {
+    try {
+      const ciId = req.params.ciId;
+      const connectors = await storage.getToolConnectorsByCiId(ciId);
+      res.json(connectors);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch connectors" });
+    }
+  });
+
+  // Create connector (for Settings page)
+  app.post("/api/connectors", async (req, res) => {
+    try {
+      const validatedData = insertToolConnectorSchema.parse(req.body);
+      const connector = await storage.createToolConnector(validatedData);
+      res.json(connector);
+    } catch (error) {
+      res.status(400).json({ error: error instanceof Error ? error.message : "Invalid data" });
+    }
+  });
+
+  // Update connector (for Settings page)
+  app.put("/api/connectors/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const validatedData = insertToolConnectorSchema.parse(req.body);
+      const connector = await storage.updateToolConnector(id, validatedData);
+      if (!connector) {
+        return res.status(404).json({ error: "Connector not found" });
+      }
+      res.json(connector);
+    } catch (error) {
+      res.status(400).json({ error: error instanceof Error ? error.message : "Invalid data" });
+    }
+  });
+
+  // Delete connector (for Settings page)
+  app.delete("/api/connectors/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      await storage.deleteToolConnector(id);
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to delete connector" });
+    }
+  });
+
   // Start data collection
   app.post("/api/data-collection/start", async (req, res) => {
     try {

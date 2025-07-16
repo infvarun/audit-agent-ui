@@ -123,3 +123,15 @@ The application follows a monorepo structure with shared TypeScript types and sc
 - **Enhanced wizard with context awareness** - shows existing application name in header
 - **Added API routes for fetching all applications** and individual application details
 - **Removed form validation from all wizard steps** to allow free navigation for testing
+
+### July 16, 2025 - CI-Based Connector Configuration & Settings System
+- **✓ Redesigned Step 3 to blank placeholder** directing users to Settings page for connector configuration
+- **✓ Created comprehensive Settings page** with CI search, connector management, and configuration interface
+- **✓ Updated database schema** to support CI-based connector configurations with unique constraints
+- **✓ Added ciId field to tool connectors** linking connectors to applications by CI ID
+- **✓ Implemented 4 core connector types** - SQL Server, Gnosis Path, ServiceNow, and NAS Path
+- **✓ Added Settings navigation button** in wizard header for easy access to connector management
+- **✓ Created CI-based connector API routes** for create, read, update, and delete operations
+- **✓ Enhanced storage interface** with CI-specific connector querying and management methods
+- **✓ Updated routing system** to include Settings page at `/settings` path
+- **✓ Applied database migration** to reflect new schema with ciId and unique constraint support
