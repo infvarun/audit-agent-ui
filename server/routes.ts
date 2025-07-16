@@ -12,10 +12,16 @@ import {
 import { z } from "zod";
 import * as XLSX from "xlsx";
 import fs from "fs";
+import OpenAI from "openai";
 
 const upload = multer({ 
   dest: 'uploads/',
   limits: { fileSize: 10 * 1024 * 1024 } // 10MB limit
+});
+
+// Initialize OpenAI
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
 });
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -316,6 +322,91 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ success: true });
     } catch (error) {
       res.status(500).json({ error: "Failed to delete connector" });
+    }
+  });
+
+  // Analyze questions with AI to generate prompts and tool suggestions
+  app.post("/api/questions/analyze", async (req, res) => {
+    try {
+      const { applicationId } = req.body;
+      const dataRequests = await storage.getDataRequestsByApplicationId(applicationId);
+      
+      if (dataRequests.length === 0) {
+        return res.status(404).json({ error: "No data requests found for this application" });
+      }
+
+      const allQuestions = dataRequests.flatMap(dr => dr.questions);
+      const analyzedQuestions = [];
+
+      for (const question of allQuestions) {
+        try {
+          // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
+          const response = await openai.chat.completions.create({
+            model: "gpt-4o",
+            messages: [
+              {
+                role: "system",
+                content: `You are an expert audit assistant. Your task is to analyze audit questions and generate:
+1. An efficient prompt for an AI agent to collect the required data
+2. A tool suggestion for data collection
+3. A connector recommendation
+
+Available tools: SQL Server, Gnosis Path, ServiceNow, NAS Path
+
+For each question, provide a JSON response with:
+- "prompt": A clear, actionable prompt for an AI agent
+- "toolSuggestion": The best tool from the available options
+- "connectorReason": Brief explanation why this tool is recommended
+
+Focus on practical data collection methods and be specific about what data to gather.`
+              },
+              {
+                role: "user",
+                content: `Analyze this audit question: "${question.question}"
+Category: ${question.category}
+Subcategory: ${question.subcategory || "General"}`
+              }
+            ],
+            response_format: { type: "json_object" },
+            temperature: 0.3
+          });
+
+          const analysis = JSON.parse(response.choices[0].message.content);
+          
+          analyzedQuestions.push({
+            id: question.id,
+            originalQuestion: question.question,
+            category: question.category,
+            subcategory: question.subcategory,
+            prompt: analysis.prompt,
+            toolSuggestion: analysis.toolSuggestion,
+            connectorReason: analysis.connectorReason,
+            connectorToUse: analysis.toolSuggestion.toLowerCase().replace(/\s+/g, "_")
+          });
+        } catch (error) {
+          console.error(`Error analyzing question ${question.id}:`, error);
+          // Fallback for failed analysis
+          analyzedQuestions.push({
+            id: question.id,
+            originalQuestion: question.question,
+            category: question.category,
+            subcategory: question.subcategory,
+            prompt: `Collect data to answer: ${question.question}`,
+            toolSuggestion: "SQL Server", // Default fallback
+            connectorReason: "Default suggestion due to analysis error",
+            connectorToUse: "sql_server"
+          });
+        }
+      }
+
+      res.json({ 
+        questions: analyzedQuestions,
+        totalQuestions: analyzedQuestions.length,
+        analysisComplete: true 
+      });
+    } catch (error) {
+      console.error("Question analysis error:", error);
+      res.status(500).json({ error: "Failed to analyze questions" });
     }
   });
 

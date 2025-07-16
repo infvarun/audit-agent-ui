@@ -155,15 +155,26 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Create First Audit Button */}
+        {/* Action Buttons */}
         <div className="mb-8 text-center">
-          <Button
-            onClick={() => setLocation("/wizard")}
-            className="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white px-8 py-6 text-lg font-medium rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105"
-          >
-            <Bot className="h-6 w-6 mr-3" />
-            Create First Audit
-          </Button>
+          <div className="flex items-center justify-center space-x-4">
+            <Button
+              onClick={() => setLocation("/wizard")}
+              className="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white px-8 py-6 text-lg font-medium rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105"
+            >
+              <Bot className="h-6 w-6 mr-3" />
+              Create First Audit
+            </Button>
+            
+            <Button
+              onClick={() => setLocation("/settings")}
+              variant="outline"
+              className="border-2 border-blue-500 text-blue-600 hover:bg-blue-50 px-8 py-6 text-lg font-medium rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105"
+            >
+              <Bot className="h-6 w-6 mr-3" />
+              Add Connector
+            </Button>
+          </div>
         </div>
 
         {/* Recent Audits */}
