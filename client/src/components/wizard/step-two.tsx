@@ -1,8 +1,13 @@
 import { useState, useCallback, useEffect } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { FileSpreadsheet, Upload, X, CheckCircle, List, Tags, Clock } from "lucide-react";
+import { FileSpreadsheet, Upload, X, CheckCircle, List, Tags, Settings, Plus, Trash2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Separator } from "@/components/ui/separator";
+import { Badge } from "@/components/ui/badge";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 
@@ -12,143 +17,450 @@ interface StepTwoProps {
   setCanProceed: (canProceed: boolean) => void;
 }
 
+interface ColumnMapping {
+  questionNumber: string;
+  process: string;
+  subProcess: string;
+  question: string;
+}
+
+interface FileUploadState {
+  file: File | null;
+  columns: string[];
+  sampleData: any[];
+  columnMappings: ColumnMapping;
+  isProcessing: boolean;
+}
+
 export default function StepTwo({ applicationId, onNext, setCanProceed }: StepTwoProps) {
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [primaryFile, setPrimaryFile] = useState<FileUploadState>({
+    file: null,
+    columns: [],
+    sampleData: [],
+    columnMappings: {
+      questionNumber: '',
+      process: '',
+      subProcess: '',
+      question: ''
+    },
+    isProcessing: false
+  });
+  
+  const [followupFiles, setFollowupFiles] = useState<FileUploadState[]>([]);
+  const [showColumnMapping, setShowColumnMapping] = useState(false);
+  const [processingFile, setProcessingFile] = useState<'primary' | 'followup' | null>(null);
+  const [currentFileIndex, setCurrentFileIndex] = useState<number | null>(null);
+
   const { toast } = useToast();
 
-  const { data: dataRequest, isLoading } = useQuery({
-    queryKey: ["/api/data-requests/application", applicationId],
+  const { data: dataRequests, isLoading, refetch } = useQuery({
+    queryKey: ["/api/python/data-requests", applicationId],
+    queryFn: async () => {
+      const response = await fetch(`/api/python/data-requests/${applicationId}`);
+      if (!response.ok) throw new Error("Failed to fetch data requests");
+      return response.json();
+    },
     enabled: !!applicationId,
   });
 
-  // Always allow proceeding to next step (validation removed)
+  // Check if we have processed files to allow proceeding
   useEffect(() => {
-    setCanProceed(true);
-  }, [setCanProceed]);
+    const hasPrimaryFile = dataRequests?.some((req: any) => req.file_type === 'primary');
+    setCanProceed(!!hasPrimaryFile);
+  }, [dataRequests, setCanProceed]);
 
-  const uploadMutation = useMutation({
+  // Get columns from uploaded Excel file
+  const getColumnsMutation = useMutation({
     mutationFn: async (file: File) => {
       const formData = new FormData();
       formData.append("file", file);
-      formData.append("applicationId", applicationId!.toString());
       
-      const response = await fetch("/api/data-requests", {
+      const response = await fetch("/api/python/get-columns", {
         method: "POST",
         body: formData,
       });
 
       if (!response.ok) {
-        throw new Error("Upload failed");
+        throw new Error("Failed to get columns");
       }
 
       return response.json();
     },
-    onSuccess: () => {
-      toast({
-        title: "File uploaded successfully",
-        description: "Your data request file has been processed.",
-      });
-      onNext();
+    onSuccess: (data, file) => {
+      if (processingFile === 'primary') {
+        setPrimaryFile(prev => ({
+          ...prev,
+          columns: data.columns,
+          sampleData: data.sample_data,
+          file: file
+        }));
+      } else if (processingFile === 'followup' && currentFileIndex !== null) {
+        setFollowupFiles(prev => {
+          const newFiles = [...prev];
+          newFiles[currentFileIndex] = {
+            ...newFiles[currentFileIndex],
+            columns: data.columns,
+            sampleData: data.sample_data,
+            file: file
+          };
+          return newFiles;
+        });
+      }
+      setShowColumnMapping(true);
     },
     onError: (error) => {
       toast({
-        title: "Upload failed",
+        title: "Failed to analyze file",
         description: error.message,
         variant: "destructive",
       });
     },
   });
 
-  const handleFileSelect = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+  // Process Excel file with column mappings
+  const processExcelMutation = useMutation({
+    mutationFn: async ({ file, columnMappings, fileType }: { file: File, columnMappings: ColumnMapping, fileType: string }) => {
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("applicationId", applicationId!.toString());
+      formData.append("fileType", fileType);
+      formData.append("columnMappings", JSON.stringify(columnMappings));
+      
+      const response = await fetch("/api/python/process-excel", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Upload failed");
+      }
+
+      return response.json();
+    },
+    onSuccess: (data) => {
+      toast({
+        title: "File processed successfully",
+        description: `${data.totalQuestions} questions processed from ${data.fileName}`,
+      });
+      refetch();
+      setShowColumnMapping(false);
+      setProcessingFile(null);
+      setCurrentFileIndex(null);
+    },
+    onError: (error) => {
+      toast({
+        title: "Processing failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleFileSelect = useCallback((event: React.ChangeEvent<HTMLInputElement>, fileType: 'primary' | 'followup', index?: number) => {
     const file = event.target.files?.[0];
     if (file) {
-      setSelectedFile(file);
+      setProcessingFile(fileType);
+      setCurrentFileIndex(index ?? null);
+      getColumnsMutation.mutate(file);
     }
   }, []);
 
-  const handleUpload = () => {
-    if (selectedFile) {
-      uploadMutation.mutate(selectedFile);
+  const handleProcessFile = (fileType: 'primary' | 'followup', index?: number) => {
+    const fileState = fileType === 'primary' ? primaryFile : followupFiles[index!];
+    if (fileState.file) {
+      processExcelMutation.mutate({
+        file: fileState.file,
+        columnMappings: fileState.columnMappings,
+        fileType: fileType
+      });
     }
   };
 
-  const handleRemoveFile = () => {
-    setSelectedFile(null);
+  const updateColumnMapping = (field: keyof ColumnMapping, value: string, fileType: 'primary' | 'followup', index?: number) => {
+    if (fileType === 'primary') {
+      setPrimaryFile(prev => ({
+        ...prev,
+        columnMappings: { ...prev.columnMappings, [field]: value }
+      }));
+    } else if (index !== undefined) {
+      setFollowupFiles(prev => {
+        const newFiles = [...prev];
+        newFiles[index] = {
+          ...newFiles[index],
+          columnMappings: { ...newFiles[index].columnMappings, [field]: value }
+        };
+        return newFiles;
+      });
+    }
   };
 
-  if (dataRequest) {
+  const addFollowupFile = () => {
+    setFollowupFiles(prev => [...prev, {
+      file: null,
+      columns: [],
+      sampleData: [],
+      columnMappings: {
+        questionNumber: '',
+        process: '',
+        subProcess: '',
+        question: ''
+      },
+      isProcessing: false
+    }]);
+  };
+
+  const removeFollowupFile = (index: number) => {
+    setFollowupFiles(prev => prev.filter((_, i) => i !== index));
+  };
+
+  // Column mapping component
+  const ColumnMappingForm = ({ fileState, fileType, index }: { fileState: FileUploadState, fileType: 'primary' | 'followup', index?: number }) => {
+    const isValid = fileState.columnMappings.questionNumber && 
+                   fileState.columnMappings.process && 
+                   fileState.columnMappings.subProcess && 
+                   fileState.columnMappings.question;
+
+    return (
+      <Card className="mt-4">
+        <CardHeader>
+          <CardTitle className="flex items-center space-x-2">
+            <Settings className="h-5 w-5" />
+            <span>Column Mapping</span>
+          </CardTitle>
+          <p className="text-sm text-slate-600">
+            Map the Excel columns to the required fields
+          </p>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="questionNumber">Question Number Column</Label>
+              <Select 
+                value={fileState.columnMappings.questionNumber} 
+                onValueChange={(value) => updateColumnMapping('questionNumber', value, fileType, index)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select column" />
+                </SelectTrigger>
+                <SelectContent>
+                  {fileState.columns.map(col => (
+                    <SelectItem key={col} value={col}>{col}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <Label htmlFor="process">Process (Category) Column</Label>
+              <Select 
+                value={fileState.columnMappings.process} 
+                onValueChange={(value) => updateColumnMapping('process', value, fileType, index)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select column" />
+                </SelectTrigger>
+                <SelectContent>
+                  {fileState.columns.map(col => (
+                    <SelectItem key={col} value={col}>{col}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <Label htmlFor="subProcess">Sub-Process (Sub-Category) Column</Label>
+              <Select 
+                value={fileState.columnMappings.subProcess} 
+                onValueChange={(value) => updateColumnMapping('subProcess', value, fileType, index)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select column" />
+                </SelectTrigger>
+                <SelectContent>
+                  {fileState.columns.map(col => (
+                    <SelectItem key={col} value={col}>{col}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <Label htmlFor="question">Question Column</Label>
+              <Select 
+                value={fileState.columnMappings.question} 
+                onValueChange={(value) => updateColumnMapping('question', value, fileType, index)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select column" />
+                </SelectTrigger>
+                <SelectContent>
+                  {fileState.columns.map(col => (
+                    <SelectItem key={col} value={col}>{col}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          {/* Sample Data Preview */}
+          {fileState.sampleData.length > 0 && (
+            <div className="mt-4">
+              <Label>Sample Data Preview</Label>
+              <div className="mt-2 overflow-x-auto">
+                <table className="min-w-full text-sm">
+                  <thead>
+                    <tr className="border-b">
+                      {fileState.columns.map(col => (
+                        <th key={col} className="text-left p-2 font-medium">{col}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {fileState.sampleData.slice(0, 3).map((row, index) => (
+                      <tr key={index} className="border-b">
+                        {fileState.columns.map(col => (
+                          <td key={col} className="p-2 text-slate-600">{row[col]}</td>
+                        ))}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          <div className="flex justify-end space-x-2">
+            <Button 
+              variant="outline" 
+              onClick={() => setShowColumnMapping(false)}
+            >
+              Cancel
+            </Button>
+            <Button 
+              onClick={() => handleProcessFile(fileType, index)}
+              disabled={!isValid || processExcelMutation.isPending}
+            >
+              {processExcelMutation.isPending ? "Processing..." : "Process File"}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  };
+
+  // Display processed files
+  if (dataRequests && dataRequests.length > 0) {
+    const primaryFiles = dataRequests.filter((req: any) => req.file_type === 'primary');
+    const followupFiles = dataRequests.filter((req: any) => req.file_type === 'followup');
+
     return (
       <div className="space-y-8">
+        {/* Primary Data Request Files */}
         <Card className="card-modern">
           <CardHeader>
             <CardTitle className="flex items-center space-x-3">
               <FileSpreadsheet className="h-5 w-5 text-green-600" />
               <span className="bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
-                Data Request File Upload
+                Primary Data Request Files
               </span>
             </CardTitle>
-            <p className="text-sm text-slate-600">
-              Upload the Excel file containing audit questions and requirements
-            </p>
           </CardHeader>
           
           <CardContent>
-            {/* File Preview */}
-            <div className="bg-slate-50 rounded-lg p-4">
-              <div className="flex items-center space-x-4">
-                <div className="flex-shrink-0">
-                  <FileSpreadsheet className="h-8 w-8 text-success" />
+            {primaryFiles.map((dataRequest: any, index: number) => (
+              <div key={index} className="mb-6 last:mb-0">
+                <div className="bg-slate-50 rounded-lg p-4">
+                  <div className="flex items-center space-x-4">
+                    <div className="flex-shrink-0">
+                      <FileSpreadsheet className="h-8 w-8 text-green-600" />
+                    </div>
+                    <div className="flex-1">
+                      <h4 className="text-sm font-medium text-slate-900">
+                        {dataRequest.file_name}
+                      </h4>
+                      <p className="text-xs text-slate-500">
+                        {(dataRequest.file_size / 1024 / 1024).toFixed(1)} MB • {dataRequest.total_questions} questions • {dataRequest.categories?.length || 0} categories
+                      </p>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Badge variant="secondary" className="bg-green-100 text-green-800">
+                        Processed
+                      </Badge>
+                    </div>
+                  </div>
                 </div>
-                <div className="flex-1">
-                  <h4 className="text-sm font-medium text-slate-900">
-                    {dataRequest.fileName}
-                  </h4>
-                  <p className="text-xs text-slate-500">
-                    {(dataRequest.fileSize / 1024 / 1024).toFixed(1)} MB • {dataRequest.totalQuestions} questions • {dataRequest.categories} categories
-                  </p>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <span className="px-2 py-1 bg-success text-white text-xs rounded">
-                    Valid
-                  </span>
-                </div>
-              </div>
-            </div>
 
-            {/* File Analysis */}
-            <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="bg-blue-50 rounded-lg p-4">
-                <div className="flex items-center">
-                  <List className="h-5 w-5 text-blue-600 mr-2" />
-                  <span className="text-sm font-medium text-blue-900">
-                    Total Questions
-                  </span>
+                {/* File Analysis */}
+                <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="bg-blue-50 rounded-lg p-4">
+                    <div className="flex items-center">
+                      <List className="h-5 w-5 text-blue-600 mr-2" />
+                      <span className="text-sm font-medium text-blue-900">
+                        Total Questions
+                      </span>
+                    </div>
+                    <p className="text-2xl font-bold text-blue-900 mt-2">
+                      {dataRequest.total_questions}
+                    </p>
+                  </div>
+                  <div className="bg-green-50 rounded-lg p-4">
+                    <div className="flex items-center">
+                      <Tags className="h-5 w-5 text-green-600 mr-2" />
+                      <span className="text-sm font-medium text-green-900">
+                        Categories
+                      </span>
+                    </div>
+                    <p className="text-2xl font-bold text-green-900 mt-2">
+                      {dataRequest.categories?.length || 0}
+                    </p>
+                  </div>
                 </div>
-                <p className="text-2xl font-bold text-blue-900 mt-2">
-                  {dataRequest.totalQuestions}
-                </p>
               </div>
-              <div className="bg-green-50 rounded-lg p-4">
-                <div className="flex items-center">
-                  <Tags className="h-5 w-5 text-green-600 mr-2" />
-                  <span className="text-sm font-medium text-green-900">
-                    Categories
-                  </span>
+            ))}
+          </CardContent>
+        </Card>
+
+        {/* Follow-up Question Files */}
+        <Card className="card-modern">
+          <CardHeader>
+            <CardTitle className="flex items-center space-x-3">
+              <FileSpreadsheet className="h-5 w-5 text-purple-600" />
+              <span className="bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
+                Follow-up Question Files
+              </span>
+            </CardTitle>
+          </CardHeader>
+          
+          <CardContent>
+            {followupFiles.length > 0 ? (
+              followupFiles.map((dataRequest: any, index: number) => (
+                <div key={index} className="mb-6 last:mb-0">
+                  <div className="bg-slate-50 rounded-lg p-4">
+                    <div className="flex items-center space-x-4">
+                      <div className="flex-shrink-0">
+                        <FileSpreadsheet className="h-8 w-8 text-purple-600" />
+                      </div>
+                      <div className="flex-1">
+                        <h4 className="text-sm font-medium text-slate-900">
+                          {dataRequest.file_name}
+                        </h4>
+                        <p className="text-xs text-slate-500">
+                          {(dataRequest.file_size / 1024 / 1024).toFixed(1)} MB • {dataRequest.total_questions} questions • {dataRequest.categories?.length || 0} categories
+                        </p>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Badge variant="secondary" className="bg-purple-100 text-purple-800">
+                          Follow-up
+                        </Badge>
+                      </div>
+                    </div>
+                  </div>
                 </div>
-                <p className="text-2xl font-bold text-green-900 mt-2">
-                  {dataRequest.categories}
-                </p>
-              </div>
-              <div className="bg-purple-50 rounded-lg p-4">
-                <div className="flex items-center">
-                  <Clock className="h-5 w-5 text-purple-600 mr-2" />
-                  <span className="text-sm font-medium text-purple-900">
-                    Est. Time
-                  </span>
-                </div>
-                <p className="text-2xl font-bold text-purple-900 mt-2">45m</p>
-              </div>
-            </div>
+              ))
+            ) : (
+              <p className="text-slate-500 text-center py-8">No follow-up files uploaded yet</p>
+            )}
           </CardContent>
         </Card>
       </div>
@@ -157,16 +469,17 @@ export default function StepTwo({ applicationId, onNext, setCanProceed }: StepTw
 
   return (
     <div className="space-y-8">
+      {/* Primary Data Request File Upload */}
       <Card className="card-modern">
         <CardHeader>
           <CardTitle className="flex items-center space-x-3">
             <FileSpreadsheet className="h-5 w-5 text-purple-600" />
             <span className="bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
-              Data Request File Upload
+              Primary Data Request File Upload
             </span>
           </CardTitle>
           <p className="text-sm text-slate-600">
-            Upload the Excel file containing audit questions and requirements
+            Upload the main Excel file containing audit questions and requirements
           </p>
         </CardHeader>
         
@@ -184,7 +497,7 @@ export default function StepTwo({ applicationId, onNext, setCanProceed }: StepTw
               <input
                 type="file"
                 accept=".xlsx,.xls"
-                onChange={handleFileSelect}
+                onChange={(e) => handleFileSelect(e, 'primary')}
                 className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
               />
               <Button variant="outline" className="btn-gradient-outline">Select File</Button>
@@ -194,42 +507,77 @@ export default function StepTwo({ applicationId, onNext, setCanProceed }: StepTw
             </p>
           </div>
 
-          {/* Selected File Preview */}
-          {selectedFile && (
-            <div className="mt-6 bg-slate-50 rounded-lg p-4">
-              <div className="flex items-center space-x-4">
-                <div className="flex-shrink-0">
-                  <FileSpreadsheet className="h-8 w-8 text-success" />
-                </div>
-                <div className="flex-1">
-                  <h4 className="text-sm font-medium text-slate-900">
-                    {selectedFile.name}
-                  </h4>
-                  <p className="text-xs text-slate-500">
-                    {(selectedFile.size / 1024 / 1024).toFixed(1)} MB
-                  </p>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Button
-                    onClick={handleUpload}
-                    disabled={uploadMutation.isPending}
-                    size="sm"
-                    className="btn-gradient"
-                  >
-                    {uploadMutation.isPending ? "Uploading..." : "Upload"}
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={handleRemoveFile}
-                    className="text-slate-400 hover:text-red-500"
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
+          {/* Column Mapping for Primary File */}
+          {showColumnMapping && processingFile === 'primary' && (
+            <ColumnMappingForm fileState={primaryFile} fileType="primary" />
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Follow-up Question File Upload */}
+      <Card className="card-modern">
+        <CardHeader>
+          <CardTitle className="flex items-center space-x-3">
+            <FileSpreadsheet className="h-5 w-5 text-green-600" />
+            <span className="bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent">
+              Follow-up Question File Upload
+            </span>
+          </CardTitle>
+          <p className="text-sm text-slate-600">
+            Upload additional Excel files for follow-up questions (optional)
+          </p>
+        </CardHeader>
+        
+        <CardContent>
+          {followupFiles.map((fileState, index) => (
+            <div key={index} className="mb-6 last:mb-0 border border-slate-200 rounded-lg p-4">
+              <div className="flex items-center justify-between mb-4">
+                <h4 className="text-sm font-medium text-slate-900">
+                  Follow-up File #{index + 1}
+                </h4>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => removeFollowupFile(index)}
+                  className="text-red-500 hover:text-red-700"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
+
+              <div className="border-2 border-dashed border-green-300 rounded-lg p-6 text-center hover:border-green-500 hover:bg-green-50/50 transition-all duration-300">
+                <Upload className="mx-auto h-8 w-8 text-green-400 mb-3" />
+                <p className="text-sm text-slate-500 mb-3">
+                  Drop your Excel file here or click to browse
+                </p>
+                <div className="relative">
+                  <input
+                    type="file"
+                    accept=".xlsx,.xls"
+                    onChange={(e) => handleFileSelect(e, 'followup', index)}
+                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                  />
+                  <Button variant="outline" size="sm">Select File</Button>
                 </div>
               </div>
+
+              {/* Column Mapping for Follow-up File */}
+              {showColumnMapping && processingFile === 'followup' && currentFileIndex === index && (
+                <ColumnMappingForm fileState={fileState} fileType="followup" index={index} />
+              )}
             </div>
-          )}
+          ))}
+
+          <div className="flex justify-center">
+            <Button
+              onClick={addFollowupFile}
+              variant="outline"
+              className="flex items-center space-x-2"
+            >
+              <Plus className="h-4 w-4" />
+              <span>Add Follow-up File</span>
+            </Button>
+          </div>
         </CardContent>
       </Card>
     </div>

@@ -98,6 +98,19 @@ The application follows a monorepo structure with shared TypeScript types and sc
 
 ## Recent Changes: Latest modifications with dates
 
+### July 16, 2025 - Python Flask API Integration for Step 2
+- **✓ Created Python Flask API server** for Excel file processing on port 5001
+- **✓ Added comprehensive Excel column mapping** with Question Number, Process, Sub-Process, and Question fields
+- **✓ Implemented dual file upload system** - Primary Data Request Files and Follow-up Question Files
+- **✓ Updated database schema** with fileType, categories, subcategories, and columnMappings JSON fields
+- **✓ Enhanced Step 2 UI** with dynamic column selection, sample data preview, and validation
+- **✓ Added real-time file processing** with pandas and openpyxl for Excel parsing
+- **✓ Removed estimated time display** as requested
+- **✓ Created comprehensive error handling** and progress tracking for file uploads
+- **✓ Added support for multiple follow-up files** with add/remove functionality
+- **✓ Integrated Flask API endpoints** for column detection and file processing
+- **✓ Updated database storage** to handle complex JSON structures for questions and categories
+
 ### July 16, 2025 - Dashboard and Navigation System
 - **Added comprehensive dashboard landing page** with search functionality for existing applications
 - **Implemented navigation between dashboard and wizard** with URL-based routing

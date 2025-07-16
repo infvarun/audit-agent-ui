@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, boolean, timestamp, json } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, timestamp, json, uniqueIndex } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -18,11 +18,16 @@ export const dataRequests = pgTable("data_requests", {
   applicationId: integer("application_id").references(() => applications.id),
   fileName: text("file_name").notNull(),
   fileSize: integer("file_size").notNull(),
+  fileType: text("file_type").notNull().default("primary"), // primary or followup
   questions: json("questions").notNull(),
   totalQuestions: integer("total_questions").notNull(),
-  categories: integer("categories").notNull(),
+  categories: json("categories").notNull(),
+  subcategories: json("subcategories").notNull(),
+  columnMappings: json("column_mappings").notNull(),
   uploadedAt: timestamp("uploaded_at").defaultNow(),
-});
+}, (table) => ({
+  uniqueApplicationFileType: uniqueIndex("unique_application_file_type").on(table.applicationId, table.fileType),
+}));
 
 export const toolConnectors = pgTable("tool_connectors", {
   id: serial("id").primaryKey(),
