@@ -77,8 +77,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "No file uploaded" });
       }
 
+      console.log('Processing Excel file:', req.file.originalname, 'at path:', req.file.path);
+
       // Read Excel file
-      const workbook = XLSX.readFile(req.file.path);
+      const fileBuffer = fs.readFileSync(req.file.path);
+      const workbook = XLSX.read(fileBuffer, { type: 'buffer' });
       const sheetName = workbook.SheetNames[0];
       const worksheet = workbook.Sheets[sheetName];
       
@@ -89,6 +92,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Get sample data (first 3 rows)
       const sampleData = jsonData.slice(0, 3);
       
+      console.log('Found columns:', columns);
+      console.log('Sample data rows:', sampleData.length);
+      
       // Clean up file
       fs.unlinkSync(req.file.path);
       
@@ -97,7 +103,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         sample_data: sampleData
       });
     } catch (error) {
-      res.status(500).json({ error: "Failed to process Excel file" });
+      console.error('Excel processing error:', error);
+      if (req.file) {
+        try {
+          fs.unlinkSync(req.file.path);
+        } catch (cleanupError) {
+          console.error('Error cleaning up file:', cleanupError);
+        }
+      }
+      res.status(500).json({ error: "Failed to process Excel file: " + (error instanceof Error ? error.message : 'Unknown error') });
     }
   });
 
@@ -121,7 +135,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Read Excel file
-      const workbook = XLSX.readFile(req.file.path);
+      const fileBuffer = fs.readFileSync(req.file.path);
+      const workbook = XLSX.read(fileBuffer, { type: 'buffer' });
       const sheetName = workbook.SheetNames[0];
       const worksheet = workbook.Sheets[sheetName];
       const jsonData = XLSX.utils.sheet_to_json(worksheet);
