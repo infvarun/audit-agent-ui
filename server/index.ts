@@ -2,108 +2,116 @@ import express from "express";
 import { createServer } from "http";
 import { dirname, join } from "path";
 import { fileURLToPath } from "url";
-import cors from "cors";
-import { createServer as createViteServer, ViteDevServer } from "vite";
-import { apiRouter } from "./routes.js";
-import session from "express-session";
-import { nanoid } from "nanoid";
-import MemoryStore from "memorystore";
+import { createServer as createViteServer } from "vite";
+import { exec } from "child_process";
+import { createProxyMiddleware } from "http-proxy-middleware";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const app = express();
 
-// Session store
-const MemoryStoreSession = MemoryStore(session);
+// Start Python backend
+console.log("Starting Python backend server on port 8000...");
+const pythonProcess = exec("python3 start_python_backend.py", {
+  cwd: join(__dirname, ".."),
+  stdio: "pipe",
+  env: { ...process.env, PORT: "8000" },
+});
 
-app.use(session({
-  genid: () => nanoid(),
-  secret: process.env.SESSION_SECRET || "dev-secret-key",
-  resave: false,
-  saveUninitialized: false,
-  store: new MemoryStoreSession({
-    checkPeriod: 86400000, // prune expired entries every 24h
-  }),
-  cookie: {
-    secure: false, // set to true if using https
-    httpOnly: true,
-    maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days
-  },
-}));
+pythonProcess.stdout?.on("data", (data) => {
+  console.log(`[Python] ${data.toString().trim()}`);
+});
 
-// Middleware
-app.use(cors({
-  origin: process.env.NODE_ENV === "production" ? false : ["http://localhost:5173"],
-  credentials: true,
-}));
-app.use(express.json({ limit: "50mb" }));
-app.use(express.urlencoded({ extended: true, limit: "50mb" }));
+pythonProcess.stderr?.on("data", (data) => {
+  console.error(`[Python Error] ${data.toString().trim()}`);
+});
 
-// API routes
-app.use("/api", apiRouter);
+// Wait for Python server to start
+await new Promise((resolve) => setTimeout(resolve, 3000));
 
-// Health check
+// Health check for the Node.js proxy
 app.get("/health", (req, res) => {
-  res.json({ status: "ok", timestamp: new Date().toISOString() });
+  res.json({ status: "ok", service: "nodejs-proxy" });
 });
 
 const server = createServer(app);
 
+// Manual proxy handler for API routes
+app.use("/api", async (req, res, next) => {
+  console.log("API request received:", req.method, req.path);
+  
+  try {
+    const response = await fetch(`http://localhost:8000${req.originalUrl}`, {
+      method: req.method,
+      headers: {
+        "Content-Type": "application/json",
+        ...req.headers,
+      },
+      body: req.method !== "GET" ? JSON.stringify(req.body) : undefined,
+    });
+    
+    const data = await response.text();
+    console.log("API response:", response.status, data.substring(0, 100));
+    
+    res.status(response.status);
+    const contentType = response.headers.get("Content-Type") || "application/json";
+    res.setHeader("Content-Type", contentType);
+    console.log("Setting Content-Type:", contentType);
+    res.send(data);
+  } catch (error) {
+    console.error("API proxy error:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
 if (process.env.NODE_ENV === "development") {
-  // Development mode - set up Vite dev server
-  const vite = await createViteServer({
-    server: { middlewareMode: true },
-    appType: "spa",
-    root: join(__dirname, "../client"),
-    build: {
-      outDir: join(__dirname, "../dist/public"),
-    },
-  });
-
-  app.use(vite.ssrFixStacktrace);
-  app.use(vite.middlewares);
-
-  // Handle client-side routing
-  app.get("*", async (req, res, next) => {
+  // Development mode - serve built files directly
+  app.use(express.static(join(__dirname, "../dist/public")));
+  
+  // Handle client-side routing - but NOT for API routes
+  app.get("*", (req, res, next) => {
+    // Skip API routes - they're handled by the proxy above
     if (req.path.startsWith("/api/")) {
       return next();
     }
-
-    try {
-      const url = req.originalUrl;
-      const template = await vite.transformIndexHtml(url, `
-        <!DOCTYPE html>
-        <html lang="en">
-          <head>
-            <meta charset="UTF-8" />
-            <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-            <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-            <title>Audit Data Collection</title>
-          </head>
-          <body>
-            <div id="root"></div>
-            <script type="module" src="/src/main.tsx"></script>
-          </body>
-        </html>
-      `);
-      
-      res.status(200).set({ "Content-Type": "text/html" }).end(template);
-    } catch (e) {
-      vite.ssrFixStacktrace(e as Error);
-      next(e);
+    
+    // Check if built files exist
+    const indexPath = join(__dirname, "../dist/public/index.html");
+    if (require("fs").existsSync(indexPath)) {
+      res.sendFile(indexPath);
+    } else {
+      res.status(404).send("Frontend not built. Please run 'npm run build' first.");
     }
   });
 } else {
   // Production mode - serve static files
   app.use(express.static(join(__dirname, "../dist/public")));
   
-  app.get("*", (req, res) => {
+  // Handle client-side routing - but NOT for API routes
+  app.get("*", (req, res, next) => {
+    if (req.path.startsWith("/api/")) {
+      return next();
+    }
     res.sendFile(join(__dirname, "../dist/public/index.html"));
   });
 }
 
 const port = process.env.PORT || 5000;
 server.listen(port, "0.0.0.0", () => {
-  console.log(`Server running on port ${port}`);
+  console.log(`Node.js proxy server running on port ${port}`);
+  console.log(`Python backend running on port 8000`);
+});
+
+// Handle graceful shutdown
+process.on("SIGINT", () => {
+  console.log("Shutting down servers...");
+  pythonProcess.kill();
+  process.exit(0);
+});
+
+process.on("SIGTERM", () => {
+  console.log("Shutting down servers...");
+  pythonProcess.kill();
+  process.exit(0);
 });
 
 export default app;

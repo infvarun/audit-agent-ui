@@ -41,53 +41,55 @@ class Application(Base):
     __tablename__ = "applications"
     
     id = Column(Integer, primary_key=True, index=True)
-    auditName = Column(String, nullable=False)
+    auditName = Column("audit_name", String, nullable=False)
     name = Column(String, nullable=False)
-    ciId = Column(String, nullable=False)
-    startDate = Column(String, nullable=False)
-    endDate = Column(String, nullable=False)
+    ciId = Column("ci_id", String, nullable=False)
+    startDate = Column("start_date", String, nullable=False)
+    endDate = Column("end_date", String, nullable=False)
     settings = Column(JSON, default={})
-    createdAt = Column(DateTime(timezone=True), server_default=func.now())
+    createdAt = Column("created_at", DateTime(timezone=True), server_default=func.now())
 
 class DataRequest(Base):
-    __tablename__ = "dataRequests"
+    __tablename__ = "data_requests"
     
     id = Column(Integer, primary_key=True, index=True)
-    applicationId = Column(Integer, nullable=False)
-    fileName = Column(String, nullable=False)
-    filePath = Column(String, nullable=False)
-    fileSize = Column(Integer, nullable=False)
-    fileType = Column(String, nullable=False)
+    applicationId = Column("application_id", Integer, nullable=False)
+    fileName = Column("file_name", String, nullable=False)
+    filePath = Column("file_path", String, nullable=False)
+    fileSize = Column("file_size", Integer, nullable=False)
+    fileType = Column("file_type", String, nullable=False)
     categories = Column(JSON, default=[])
     subcategories = Column(JSON, default=[])
-    columnMappings = Column(JSON, default={})
+    columnMappings = Column("column_mappings", JSON, default={})
     questions = Column(JSON, default=[])
-    createdAt = Column(DateTime(timezone=True), server_default=func.now())
+    createdAt = Column("uploaded_at", DateTime(timezone=True), server_default=func.now())
 
 class QuestionAnalysis(Base):
-    __tablename__ = "questionAnalyses"
+    __tablename__ = "question_analyses"
     
     id = Column(Integer, primary_key=True, index=True)
-    applicationId = Column(Integer, nullable=False)
-    questionId = Column(String, nullable=False)
-    originalQuestion = Column(Text, nullable=False)
+    applicationId = Column("application_id", Integer, nullable=False)
+    questionId = Column("question_id", String, nullable=False)
+    originalQuestion = Column("original_question", Text, nullable=False)
     category = Column(String)
     subcategory = Column(String)
-    aiPrompt = Column(Text, nullable=False)
-    toolSuggestion = Column(String, nullable=False)
-    connectorReason = Column(Text)
-    connectorToUse = Column(String)
-    createdAt = Column(DateTime(timezone=True), server_default=func.now())
+    aiPrompt = Column("ai_prompt", Text, nullable=False)
+    toolSuggestion = Column("tool_suggestion", String, nullable=False)
+    connectorReason = Column("connector_reason", Text)
+    connectorToUse = Column("connector_to_use", String)
+    createdAt = Column("created_at", DateTime(timezone=True), server_default=func.now())
 
 class DataCollectionSession(Base):
-    __tablename__ = "dataCollectionSessions"
+    __tablename__ = "data_collection_sessions"
     
     id = Column(Integer, primary_key=True, index=True)
-    applicationId = Column(Integer, nullable=False)
+    applicationId = Column("application_id", Integer, nullable=False)
     status = Column(String, default="pending")
     progress = Column(Integer, default=0)
     logs = Column(JSON, default=[])
-    createdAt = Column(DateTime(timezone=True), server_default=func.now())
+    startedAt = Column("started_at", DateTime(timezone=True))
+    completedAt = Column("completed_at", DateTime(timezone=True))
+    createdAt = Column("created_at", DateTime(timezone=True), server_default=func.now())
 
 # Pydantic Models
 class ApplicationCreate(BaseModel):
@@ -476,7 +478,10 @@ elif os.path.exists("public"):
 @app.get("/{path:path}")
 async def serve_spa(path: str):
     """Serve the React SPA for all non-API routes"""
+    print(f"Catch-all route received path: '{path}'")
+    
     if path.startswith("api/"):
+        print(f"Rejecting API path: '{path}'")
         raise HTTPException(status_code=404, detail="API endpoint not found")
     
     # Serve index.html for SPA routing

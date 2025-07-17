@@ -3,15 +3,15 @@ import { useParams } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "wouter";
 import { ArrowLeft, Settings, User, TrendingUp } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import ProgressBar from "@/components/wizard/progress-bar";
-import Navigation from "@/components/wizard/navigation";
-import StepOne from "@/components/wizard/step-one";
-import StepTwo from "@/components/wizard/step-two";
-import StepThree from "@/components/wizard/step-three";
-import StepFour from "@/components/wizard/step-four";
-import StepFive from "@/components/wizard/step-five";
+import { Button } from "../components/ui/button";
+import { Avatar, AvatarFallback } from "../components/ui/avatar";
+import ProgressBar from "../components/wizard/progress-bar";
+import Navigation from "../components/wizard/navigation";
+import StepOne from "../components/wizard/step-one";
+import StepTwo from "../components/wizard/step-two";
+import StepThree from "../components/wizard/step-three";
+import StepFour from "../components/wizard/step-four";
+import StepFive from "../components/wizard/step-five";
 import { Application } from "@shared/schema";
 
 const steps = [

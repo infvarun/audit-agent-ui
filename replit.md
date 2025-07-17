@@ -20,12 +20,13 @@ Preferred communication style: Simple, everyday language.
 - **Form Management**: React Hook Form with Zod validation
 
 ### Backend Architecture
-- **Framework**: Express.js with TypeScript
-- **Database**: PostgreSQL with Drizzle ORM
+- **Framework**: Python FastAPI with async/await patterns
+- **Database**: PostgreSQL with SQLAlchemy ORM
 - **Database Provider**: Neon Database (serverless PostgreSQL)
-- **File Upload**: Multer for handling multipart/form-data
+- **AI Integration**: LangChain with OpenAI GPT-4o for question analysis
 - **API**: RESTful API with JSON responses
-- **Development**: Hot reload with Vite middleware integration
+- **Development**: Uvicorn server with hot reload support
+- **Proxy**: Node.js proxy server for frontend serving and API routing
 
 ## Key Components
 
@@ -70,31 +71,33 @@ Preferred communication style: Simple, everyday language.
 - **Date Handling**: date-fns for date manipulation
 
 ### Backend Dependencies
-- **Database**: Drizzle ORM with PostgreSQL dialect
-- **File Upload**: Multer for multipart form handling
-- **Session Management**: connect-pg-simple for PostgreSQL sessions
-- **Database Connection**: @neondatabase/serverless for Neon integration
+- **Database**: SQLAlchemy ORM with PostgreSQL dialect
+- **AI Processing**: LangChain with OpenAI integration
+- **API Framework**: FastAPI with Pydantic models
+- **Database Connection**: asyncpg for PostgreSQL connections
+- **File Processing**: openpyxl for Excel file handling
 
 ## Deployment Strategy
 
 ### Development
-- **Server**: Express.js with Vite middleware for HMR
+- **Frontend**: Vite dev server with HMR via Node.js proxy
+- **Backend**: Python FastAPI with Uvicorn and hot reload
 - **Database**: Neon PostgreSQL with connection pooling
-- **Build**: Vite dev server for frontend, tsx for backend execution
+- **Build**: Vite for frontend, Python for backend execution
 
 ### Production
-- **Frontend**: Static files built with Vite and served by Express
-- **Backend**: Bundled with esbuild for optimized Node.js execution
-- **Database**: Drizzle migrations applied via `db:push` command
-- **Environment**: DATABASE_URL required for PostgreSQL connection
+- **Frontend**: Static files built with Vite and served by Node.js proxy
+- **Backend**: Python FastAPI with Uvicorn for production deployment
+- **Database**: SQLAlchemy models with direct PostgreSQL connection
+- **Environment**: DATABASE_URL and OPENAI_API_KEY required
 
 ### Build Process
 - Frontend assets built to `dist/public`
-- Backend bundled to `dist/index.js`
-- Database schema pushed via Drizzle Kit
-- Static file serving integrated with Express
+- Python backend runs directly via start_python_backend.py
+- Database schema created via SQLAlchemy metadata
+- Static file serving integrated with Node.js proxy
 
-The application follows a monorepo structure with shared TypeScript types and schemas, enabling type safety across the full stack while maintaining clear separation between frontend and backend concerns.
+The application follows a hybrid architecture with React frontend and Python backend, using a Node.js proxy for development serving. The frontend uses TypeScript for type safety while the backend uses Pydantic models for data validation, maintaining clear separation between frontend and backend concerns.
 
 ## Recent Changes: Latest modifications with dates
 
@@ -182,3 +185,13 @@ The application follows a monorepo structure with shared TypeScript types and sc
 - **✓ Built React frontend** to work with Python backend API endpoints
 - **✓ Configured static file serving** for React app from Python FastAPI server
 - **✓ Updated architecture to React + Python** - completely eliminated Node.js server dependency
+
+### July 17, 2025 - Fixed Application Startup & Architecture Optimization
+- **✓ Resolved missing server/index.ts file** that was causing application startup failures
+- **✓ Created Node.js proxy server** to serve React frontend and route API calls to Python backend
+- **✓ Fixed port conflicts** by running Python backend on port 8000 and Node.js proxy on port 5000
+- **✓ Installed http-proxy-middleware** for proper API request routing between frontend and backend
+- **✓ Updated replit.md architecture documentation** to reflect hybrid React + Python setup
+- **✓ Configured proper process management** with graceful shutdown handling for both servers
+- **✓ Restored application functionality** with working React frontend and Python FastAPI backend
+- **✓ Maintained separation of concerns** - React handles UI, Python handles AI processing and data storage
