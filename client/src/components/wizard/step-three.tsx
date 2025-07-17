@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Progress } from "@/components/ui/progress";
-import { Player } from "@lottiefiles/react-lottie-player";
+import { DotLottieReact } from "@lottiefiles/dotlottie-react";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 
@@ -222,7 +222,7 @@ export default function StepThree({ applicationId, onNext, setCanProceed }: Step
             <div className="flex items-center justify-center py-12">
               <div className="text-center max-w-md mx-auto">
                 <div className="mb-6">
-                  <Player
+                  <DotLottieReact
                     src="/attached_assets/Assistant-Bot_1752717553723.lottie"
                     className="h-24 w-24 mx-auto"
                     loop
