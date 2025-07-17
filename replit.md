@@ -159,3 +159,5 @@ The application follows a monorepo structure with shared TypeScript types and sc
 - **✓ Updated database schema** with questionAnalyses table and unique constraints
 - **✓ Added API endpoints** for saving, loading, and managing question analyses
 - **✓ Applied database migration** to support new question analysis persistence
+- **✓ Enabled persistent Save button** allowing users to save tool suggestion changes at any time
+- **✓ Added state reset functionality** to mark changes as unsaved when users modify tool suggestions

@@ -135,6 +135,8 @@ export default function StepThree({ applicationId, onNext, setCanProceed }: Step
           : q
       )
     );
+    // Reset saved state when user makes changes
+    setIsSaved(false);
   };
 
   const toggleRowExpansion = (questionId: string) => {
@@ -188,17 +190,19 @@ export default function StepThree({ applicationId, onNext, setCanProceed }: Step
               {analyzedQuestions.length > 0 && (
                 <Button
                   onClick={() => saveAnalysesMutation.mutate(analyzedQuestions)}
-                  disabled={saveAnalysesMutation.isPending || isSaved}
+                  disabled={saveAnalysesMutation.isPending}
                   variant="outline"
                   size="sm"
                   className={isSaved ? "bg-green-50 border-green-200 text-green-700" : ""}
                 >
-                  {isSaved ? (
+                  {saveAnalysesMutation.isPending ? (
+                    <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                  ) : isSaved ? (
                     <CheckCircle2 className="h-4 w-4 mr-2" />
                   ) : (
                     <Save className="h-4 w-4 mr-2" />
                   )}
-                  {isSaved ? "Saved" : "Save"}
+                  {saveAnalysesMutation.isPending ? "Saving..." : isSaved ? "Saved" : "Save"}
                 </Button>
               )}
               <Button
