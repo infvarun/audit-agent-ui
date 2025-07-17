@@ -80,9 +80,13 @@ cd audit-data-collection
 npm install
 
 # Install Python dependencies
-pip install -r requirements.txt
-# or if using uv (recommended)
+pip install fastapi>=0.116.1 uvicorn>=0.35.0 python-multipart>=0.0.20 sqlalchemy>=2.0.41 asyncpg>=0.30.0 psycopg2-binary>=2.9.10 pydantic>=2.11.7 langchain>=0.3.26 langchain-core>=0.3.69 langchain-openai>=0.3.28 pandas>=2.3.1 openpyxl>=3.1.5 python-dotenv>=1.1.1 flask>=3.1.1 flask-cors>=6.0.1 werkzeug>=3.1.3
+
+# Alternative: Install using uv (recommended for this project)
 uv sync
+
+# Or install individually (see python-dependencies.txt for details)
+pip install fastapi uvicorn sqlalchemy asyncpg psycopg2-binary pydantic langchain langchain-core langchain-openai pandas openpyxl python-dotenv
 ```
 
 ### Step 2: Environment Variables
