@@ -5,6 +5,7 @@ import { fileURLToPath } from "url";
 import { createServer as createViteServer } from "vite";
 import { exec } from "child_process";
 import { createProxyMiddleware } from "http-proxy-middleware";
+import http from "http";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const app = express();
@@ -35,28 +36,57 @@ app.get("/health", (req, res) => {
 
 const server = createServer(app);
 
+// Add JSON body parser before API routes
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
 // Manual proxy handler for API routes
 app.use("/api", async (req, res, next) => {
   console.log("API request received:", req.method, req.path);
+  console.log("Request body:", req.body);
   
   try {
-    const response = await fetch(`http://localhost:8000${req.originalUrl}`, {
+    const bodyData = req.method !== "GET" ? JSON.stringify(req.body) : undefined;
+    
+    const options = {
+      hostname: "localhost",
+      port: 8000,
+      path: req.originalUrl,
       method: req.method,
       headers: {
         "Content-Type": "application/json",
-        ...req.headers,
       },
-      body: req.method !== "GET" ? JSON.stringify(req.body) : undefined,
+    };
+    
+    if (bodyData) {
+      options.headers["Content-Length"] = Buffer.byteLength(bodyData, 'utf8');
+    }
+    
+    const proxyReq = http.request(options, (proxyRes) => {
+      res.status(proxyRes.statusCode || 500);
+      res.setHeader("Content-Type", proxyRes.headers["content-type"] || "application/json");
+      
+      let data = "";
+      proxyRes.on("data", (chunk) => {
+        data += chunk;
+      });
+      
+      proxyRes.on("end", () => {
+        console.log("API response:", proxyRes.statusCode, data.substring(0, 100));
+        res.send(data);
+      });
     });
     
-    const data = await response.text();
-    console.log("API response:", response.status, data.substring(0, 100));
+    proxyReq.on("error", (error) => {
+      console.error("API proxy error:", error);
+      res.status(500).json({ error: "Internal server error" });
+    });
     
-    res.status(response.status);
-    const contentType = response.headers.get("Content-Type") || "application/json";
-    res.setHeader("Content-Type", contentType);
-    console.log("Setting Content-Type:", contentType);
-    res.send(data);
+    if (bodyData) {
+      proxyReq.write(bodyData);
+    }
+    
+    proxyReq.end();
   } catch (error) {
     console.error("API proxy error:", error);
     res.status(500).json({ error: "Internal server error" });

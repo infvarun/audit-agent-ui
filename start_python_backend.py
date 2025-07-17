@@ -55,7 +55,7 @@ class DataRequest(Base):
     id = Column(Integer, primary_key=True, index=True)
     applicationId = Column("application_id", Integer, nullable=False)
     fileName = Column("file_name", String, nullable=False)
-    filePath = Column("file_path", String, nullable=False)
+    filePath = Column("file_path", String, nullable=True)
     fileSize = Column("file_size", Integer, nullable=False)
     fileType = Column("file_type", String, nullable=False)
     categories = Column(JSON, default=[])
@@ -329,6 +329,29 @@ async def get_data_requests_by_application(
         print(f"Error fetching data requests: {str(e)}")
         raise HTTPException(status_code=500, detail="Failed to fetch data requests")
 
+# Excel processing endpoints
+@app.post("/api/excel/get-columns")
+async def get_excel_columns(request: Dict[str, Any] = None):
+    """Get columns from Excel file"""
+    try:
+        # For now, return mock columns since we don't have the actual Excel processing
+        return {
+            "columns": [
+                "Question Number",
+                "Process", 
+                "Sub-Process",
+                "Question"
+            ],
+            "sampleData": [
+                ["1", "Risk Assessment", "Data Security", "How is data encrypted?"],
+                ["2", "Compliance", "GDPR", "What is the data retention policy?"],
+                ["3", "Operations", "Backup", "How often are backups performed?"]
+            ]
+        }
+    except Exception as e:
+        print(f"Error processing Excel: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to process Excel file")
+
 # Question analysis endpoints
 @app.post("/api/questions/analyze")
 async def analyze_questions(
@@ -424,12 +447,15 @@ async def get_question_analyses(
 # Data collection endpoints
 @app.post("/api/data-collection/start")
 async def start_data_collection(
-    request: Dict[str, Any],
+    request: Dict[str, Any] = None,
     db: Session = Depends(get_db)
 ):
     """Start data collection session"""
     try:
-        application_id = request.get("applicationId")
+        if not request:
+            request = {}
+            
+        application_id = request.get("applicationId") if request else None
         if not application_id:
             raise HTTPException(status_code=400, detail="Application ID is required")
         
