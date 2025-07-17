@@ -74,6 +74,20 @@
   .btn-gradient {
     @apply bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 active:scale-95;
   }
+
+  .ai-pulse {
+    animation: aiPulse 2s ease-in-out infinite;
+  }
+
+  .ai-pulse-delayed {
+    animation: aiPulse 2s ease-in-out infinite;
+    animation-delay: 0.5s;
+  }
+
+  .ai-pulse-slow {
+    animation: aiPulse 3s ease-in-out infinite;
+    animation-delay: 1s;
+  }
   
   .btn-gradient-outline {
     @apply bg-transparent border-2 border-transparent bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-padding text-transparent bg-clip-text hover:bg-white hover:text-purple-600 font-semibold transition-all duration-300 hover:border-purple-600;
@@ -93,6 +107,17 @@
   
   .glass-effect {
     @apply bg-white/10 backdrop-blur-lg border border-white/20 shadow-xl;
+  }
+}
+
+@keyframes aiPulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.4;
+  }
+  50% {
+    transform: scale(1.1);
+    opacity: 0.8;
   }
 }
 
