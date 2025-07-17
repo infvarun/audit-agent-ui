@@ -51,6 +51,22 @@ export const dataCollectionSessions = pgTable("data_collection_sessions", {
   completedAt: timestamp("completed_at"),
 });
 
+export const questionAnalyses = pgTable("question_analyses", {
+  id: serial("id").primaryKey(),
+  applicationId: integer("application_id").references(() => applications.id),
+  questionId: text("question_id").notNull(),
+  originalQuestion: text("original_question").notNull(),
+  category: text("category").notNull(),
+  subcategory: text("subcategory"),
+  aiPrompt: text("ai_prompt").notNull(),
+  toolSuggestion: text("tool_suggestion").notNull(),
+  connectorReason: text("connector_reason").notNull(),
+  connectorToUse: text("connector_to_use").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => ({
+  uniqueApplicationQuestion: uniqueIndex("unique_application_question").on(table.applicationId, table.questionId),
+}));
+
 export const auditResults = pgTable("audit_results", {
   id: serial("id").primaryKey(),
   applicationId: integer("application_id").references(() => applications.id),
@@ -84,6 +100,11 @@ export const insertDataCollectionSessionSchema = createInsertSchema(dataCollecti
   completedAt: true,
 });
 
+export const insertQuestionAnalysisSchema = createInsertSchema(questionAnalyses).omit({
+  id: true,
+  createdAt: true,
+});
+
 export const insertAuditResultSchema = createInsertSchema(auditResults).omit({
   id: true,
   createdAt: true,
@@ -93,6 +114,8 @@ export type Application = typeof applications.$inferSelect;
 export type InsertApplication = z.infer<typeof insertApplicationSchema>;
 export type DataRequest = typeof dataRequests.$inferSelect;
 export type InsertDataRequest = z.infer<typeof insertDataRequestSchema>;
+export type QuestionAnalysis = typeof questionAnalyses.$inferSelect;
+export type InsertQuestionAnalysis = z.infer<typeof insertQuestionAnalysisSchema>;
 export type ToolConnector = typeof toolConnectors.$inferSelect;
 export type InsertToolConnector = z.infer<typeof insertToolConnectorSchema>;
 export type DataCollectionSession = typeof dataCollectionSessions.$inferSelect;

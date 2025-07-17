@@ -7,7 +7,8 @@ import {
   insertDataRequestSchema, 
   insertToolConnectorSchema,
   insertDataCollectionSessionSchema,
-  insertAuditResultSchema 
+  insertAuditResultSchema,
+  insertQuestionAnalysisSchema 
 } from "@shared/schema";
 import { z } from "zod";
 import * as XLSX from "xlsx";
@@ -325,6 +326,53 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get saved question analyses
+  app.get("/api/questions/analyses/:applicationId", async (req, res) => {
+    try {
+      const applicationId = parseInt(req.params.applicationId);
+      const analyses = await storage.getQuestionAnalysesByApplicationId(applicationId);
+      res.json({ analyses });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch question analyses" });
+    }
+  });
+
+  // Save question analyses
+  app.post("/api/questions/analyses/save", async (req, res) => {
+    try {
+      const { applicationId, analyses } = req.body;
+      
+      // Clear existing analyses for this application
+      await storage.deleteQuestionAnalysesByApplicationId(applicationId);
+      
+      // Save new analyses
+      const savedAnalyses = [];
+      for (const analysis of analyses) {
+        const saved = await storage.createQuestionAnalysis({
+          applicationId,
+          questionId: analysis.id,
+          originalQuestion: analysis.originalQuestion,
+          category: analysis.category,
+          subcategory: analysis.subcategory,
+          aiPrompt: analysis.prompt,
+          toolSuggestion: analysis.toolSuggestion,
+          connectorReason: analysis.connectorReason,
+          connectorToUse: analysis.connectorToUse
+        });
+        savedAnalyses.push(saved);
+      }
+      
+      res.json({ 
+        success: true, 
+        analyses: savedAnalyses,
+        message: "Question analyses saved successfully" 
+      });
+    } catch (error) {
+      console.error("Save analyses error:", error);
+      res.status(500).json({ error: "Failed to save question analyses" });
+    }
+  });
+
   // Analyze questions with AI to generate prompts and tool suggestions
   app.post("/api/questions/analyze", async (req, res) => {
     try {
@@ -337,6 +385,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const allQuestions = dataRequests.flatMap(dr => dr.questions);
       const analyzedQuestions = [];
+      let completedQuestions = 0;
 
       for (const question of allQuestions) {
         try {
@@ -397,6 +446,8 @@ Subcategory: ${question.subcategory || "General"}`
             connectorToUse: "sql_server"
           });
         }
+        
+        completedQuestions++;
       }
 
       res.json({ 

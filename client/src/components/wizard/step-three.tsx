@@ -1,11 +1,13 @@
 import { useState, useEffect } from "react";
-import { useQuery, useMutation } from "@tanstack/react-query";
-import { Brain, RefreshCw, ChevronDown, ChevronUp, Settings, Bot } from "lucide-react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { Brain, RefreshCw, ChevronDown, ChevronUp, Settings, Bot, Save, CheckCircle2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Progress } from "@/components/ui/progress";
+import { Player } from "@lottiefiles/react-lottie-player";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 
@@ -35,26 +37,88 @@ const availableTools = [
 
 export default function StepThree({ applicationId, onNext, setCanProceed }: StepThreeProps) {
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [analyzedQuestions, setAnalyzedQuestions] = useState<AnalyzedQuestion[]>([]);
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
+  const [analysisProgress, setAnalysisProgress] = useState(0);
+  const [totalQuestions, setTotalQuestions] = useState(0);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [isSaved, setIsSaved] = useState(false);
+
+  // Load saved analyses
+  const { data: savedAnalyses, isLoading: isLoadingSaved } = useQuery({
+    queryKey: ['question-analyses', applicationId],
+    queryFn: async () => {
+      const response = await apiRequest("GET", `/api/questions/analyses/${applicationId}`);
+      return response.json();
+    },
+    enabled: !!applicationId
+  });
+
+  // Save analyses mutation
+  const saveAnalysesMutation = useMutation({
+    mutationFn: async (analyses: AnalyzedQuestion[]) => {
+      const response = await apiRequest("POST", "/api/questions/analyses/save", {
+        applicationId,
+        analyses
+      });
+      return response.json();
+    },
+    onSuccess: () => {
+      setIsSaved(true);
+      toast({
+        title: "Analyses saved successfully",
+        description: "Your AI-generated prompts and tool suggestions have been saved.",
+      });
+      queryClient.invalidateQueries({ queryKey: ['question-analyses', applicationId] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Save failed",
+        description: error.message || "Failed to save analyses",
+        variant: "destructive",
+      });
+    },
+  });
 
   // Analyze questions with AI
   const analyzeQuestionsMutation = useMutation({
     mutationFn: async () => {
+      setIsAnalyzing(true);
+      setAnalysisProgress(0);
+      
       const response = await apiRequest("POST", "/api/questions/analyze", {
         applicationId
       });
-      return response.json();
+      const data = await response.json();
+      
+      setTotalQuestions(data.totalQuestions);
+      
+      // Simulate progress as questions are analyzed
+      let currentProgress = 0;
+      const progressInterval = setInterval(() => {
+        currentProgress += (100 / data.totalQuestions);
+        setAnalysisProgress(Math.min(currentProgress, 100));
+        if (currentProgress >= 100) {
+          clearInterval(progressInterval);
+          setIsAnalyzing(false);
+        }
+      }, 500);
+      
+      return data;
     },
     onSuccess: (data) => {
       setAnalyzedQuestions(data.questions);
       setCanProceed(true);
+      setIsSaved(false);
       toast({
         title: "Questions analyzed successfully",
         description: `Generated prompts and tool suggestions for ${data.totalQuestions} questions.`,
       });
     },
     onError: (error: any) => {
+      setIsAnalyzing(false);
+      setAnalysisProgress(0);
       toast({
         title: "Analysis failed",
         description: error.message || "Failed to analyze questions",
@@ -86,10 +150,23 @@ export default function StepThree({ applicationId, onNext, setCanProceed }: Step
   };
 
   useEffect(() => {
-    if (applicationId && analyzedQuestions.length === 0) {
+    if (savedAnalyses?.analyses?.length > 0) {
+      const convertedAnalyses = savedAnalyses.analyses.map((analysis: any) => ({
+        id: analysis.questionId,
+        originalQuestion: analysis.originalQuestion,
+        category: analysis.category,
+        subcategory: analysis.subcategory,
+        prompt: analysis.aiPrompt,
+        toolSuggestion: analysis.toolSuggestion,
+        connectorReason: analysis.connectorReason,
+        connectorToUse: analysis.connectorToUse
+      }));
+      setAnalyzedQuestions(convertedAnalyses);
+      setIsSaved(true);
+    } else if (applicationId && analyzedQuestions.length === 0 && !isLoadingSaved) {
       analyzeQuestionsMutation.mutate();
     }
-  }, [applicationId]);
+  }, [savedAnalyses, applicationId, isLoadingSaved]);
 
   useEffect(() => {
     setCanProceed(analyzedQuestions.length > 0);
@@ -108,29 +185,62 @@ export default function StepThree({ applicationId, onNext, setCanProceed }: Step
               <Badge variant="outline" className="text-purple-600">
                 {analyzedQuestions.length} questions analyzed
               </Badge>
+              {analyzedQuestions.length > 0 && (
+                <Button
+                  onClick={() => saveAnalysesMutation.mutate(analyzedQuestions)}
+                  disabled={saveAnalysesMutation.isPending || isSaved}
+                  variant="outline"
+                  size="sm"
+                  className={isSaved ? "bg-green-50 border-green-200 text-green-700" : ""}
+                >
+                  {isSaved ? (
+                    <CheckCircle2 className="h-4 w-4 mr-2" />
+                  ) : (
+                    <Save className="h-4 w-4 mr-2" />
+                  )}
+                  {isSaved ? "Saved" : "Save"}
+                </Button>
+              )}
               <Button
                 onClick={() => analyzeQuestionsMutation.mutate()}
-                disabled={analyzeQuestionsMutation.isPending}
+                disabled={isAnalyzing}
                 variant="outline"
                 size="sm"
               >
-                <RefreshCw className={`h-4 w-4 mr-2 ${analyzeQuestionsMutation.isPending ? 'animate-spin' : ''}`} />
+                <RefreshCw className={`h-4 w-4 mr-2 ${isAnalyzing ? 'animate-spin' : ''}`} />
                 Re-analyze
               </Button>
             </div>
           </div>
         </CardHeader>
         <CardContent>
-          {analyzeQuestionsMutation.isPending ? (
+          {isAnalyzing ? (
             <div className="flex items-center justify-center py-12">
-              <div className="text-center">
-                <Bot className="h-12 w-12 text-purple-500 mx-auto mb-4 animate-pulse" />
+              <div className="text-center max-w-md mx-auto">
+                <div className="mb-6">
+                  <Player
+                    src="/attached_assets/Assistant-Bot_1752717553723.lottie"
+                    className="h-24 w-24 mx-auto"
+                    loop
+                    autoplay
+                  />
+                </div>
                 <h3 className="text-lg font-semibold text-slate-900 mb-2">
                   AI is analyzing your questions...
                 </h3>
-                <p className="text-slate-600">
+                <p className="text-slate-600 mb-4">
                   Generating prompts and tool suggestions for optimal data collection
                 </p>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between text-sm text-slate-600">
+                    <span>Progress</span>
+                    <span>{Math.round(analysisProgress)}%</span>
+                  </div>
+                  <Progress value={analysisProgress} className="w-full" />
+                  <p className="text-xs text-slate-500">
+                    Analyzing {totalQuestions} questions ({Math.round(analysisProgress * totalQuestions / 100)} of {totalQuestions} complete)
+                  </p>
+                </div>
               </div>
             </div>
           ) : analyzedQuestions.length === 0 ? (

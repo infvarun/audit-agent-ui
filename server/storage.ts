@@ -4,6 +4,7 @@ import {
   toolConnectors, 
   dataCollectionSessions, 
   auditResults,
+  questionAnalyses,
   type Application,
   type InsertApplication,
   type DataRequest,
@@ -13,7 +14,9 @@ import {
   type DataCollectionSession,
   type InsertDataCollectionSession,
   type AuditResult,
-  type InsertAuditResult
+  type InsertAuditResult,
+  type QuestionAnalysis,
+  type InsertQuestionAnalysis
 } from "@shared/schema";
 import { db } from "./db";
 import { eq } from "drizzle-orm";
@@ -44,6 +47,12 @@ export interface IStorage {
   updateSessionProgress(id: number, progress: number, logs: any[]): Promise<void>;
   updateSessionStatus(id: number, status: string): Promise<void>;
   
+  // Question Analyses
+  createQuestionAnalysis(analysis: InsertQuestionAnalysis): Promise<QuestionAnalysis>;
+  getQuestionAnalysesByApplicationId(applicationId: number): Promise<QuestionAnalysis[]>;
+  updateQuestionAnalysis(id: number, analysis: InsertQuestionAnalysis): Promise<QuestionAnalysis | undefined>;
+  deleteQuestionAnalysesByApplicationId(applicationId: number): Promise<void>;
+  
   // Audit Results
   createAuditResult(result: InsertAuditResult): Promise<AuditResult>;
   getAuditResultsByApplicationId(applicationId: number): Promise<AuditResult[]>;
@@ -56,6 +65,7 @@ export class MemStorage implements IStorage {
   private toolConnectors: Map<number, ToolConnector>;
   private dataCollectionSessions: Map<number, DataCollectionSession>;
   private auditResults: Map<number, AuditResult>;
+  private questionAnalyses: Map<number, QuestionAnalysis>;
   private currentId: number;
 
   constructor() {
@@ -64,6 +74,7 @@ export class MemStorage implements IStorage {
     this.toolConnectors = new Map();
     this.dataCollectionSessions = new Map();
     this.auditResults = new Map();
+    this.questionAnalyses = new Map();
     this.currentId = 1;
   }
 
@@ -243,6 +254,46 @@ export class MemStorage implements IStorage {
       this.auditResults.set(id, result);
     }
   }
+
+  async createQuestionAnalysis(insertAnalysis: InsertQuestionAnalysis): Promise<QuestionAnalysis> {
+    const id = this.currentId++;
+    const analysis: QuestionAnalysis = {
+      ...insertAnalysis,
+      id,
+      createdAt: new Date(),
+    };
+    this.questionAnalyses.set(id, analysis);
+    return analysis;
+  }
+
+  async getQuestionAnalysesByApplicationId(applicationId: number): Promise<QuestionAnalysis[]> {
+    return Array.from(this.questionAnalyses.values()).filter(
+      (analysis) => analysis.applicationId === applicationId
+    );
+  }
+
+  async updateQuestionAnalysis(id: number, insertAnalysis: InsertQuestionAnalysis): Promise<QuestionAnalysis | undefined> {
+    const existing = this.questionAnalyses.get(id);
+    if (!existing) return undefined;
+    
+    const updated: QuestionAnalysis = {
+      ...existing,
+      ...insertAnalysis,
+      id,
+      createdAt: existing.createdAt,
+    };
+    
+    this.questionAnalyses.set(id, updated);
+    return updated;
+  }
+
+  async deleteQuestionAnalysesByApplicationId(applicationId: number): Promise<void> {
+    for (const [id, analysis] of this.questionAnalyses.entries()) {
+      if (analysis.applicationId === applicationId) {
+        this.questionAnalyses.delete(id);
+      }
+    }
+  }
 }
 
 // Database-backed storage implementation
@@ -371,6 +422,36 @@ export class DatabaseStorage implements IStorage {
       .update(dataCollectionSessions)
       .set({ status })
       .where(eq(dataCollectionSessions.id, id));
+  }
+
+  async createQuestionAnalysis(insertAnalysis: InsertQuestionAnalysis): Promise<QuestionAnalysis> {
+    const [analysis] = await db
+      .insert(questionAnalyses)
+      .values(insertAnalysis)
+      .returning();
+    return analysis;
+  }
+
+  async getQuestionAnalysesByApplicationId(applicationId: number): Promise<QuestionAnalysis[]> {
+    return await db
+      .select()
+      .from(questionAnalyses)
+      .where(eq(questionAnalyses.applicationId, applicationId));
+  }
+
+  async updateQuestionAnalysis(id: number, insertAnalysis: InsertQuestionAnalysis): Promise<QuestionAnalysis | undefined> {
+    const [updated] = await db
+      .update(questionAnalyses)
+      .set(insertAnalysis)
+      .where(eq(questionAnalyses.id, id))
+      .returning();
+    return updated || undefined;
+  }
+
+  async deleteQuestionAnalysesByApplicationId(applicationId: number): Promise<void> {
+    await db
+      .delete(questionAnalyses)
+      .where(eq(questionAnalyses.applicationId, applicationId));
   }
 
   async createAuditResult(insertResult: InsertAuditResult): Promise<AuditResult> {
