@@ -7,7 +7,6 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Progress } from "@/components/ui/progress";
-import { DotLottieReact } from "@lottiefiles/dotlottie-react";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 
@@ -222,12 +221,11 @@ export default function StepThree({ applicationId, onNext, setCanProceed }: Step
             <div className="flex items-center justify-center py-12">
               <div className="text-center max-w-md mx-auto">
                 <div className="mb-6">
-                  <DotLottieReact
-                    src="/attached_assets/Assistant-Bot_1752717553723.lottie"
-                    className="h-24 w-24 mx-auto"
-                    loop
-                    autoplay
-                  />
+                  <div className="h-24 w-24 mx-auto flex items-center justify-center relative">
+                    <div className="absolute inset-0 rounded-full bg-purple-100 animate-ping opacity-75"></div>
+                    <div className="absolute inset-2 rounded-full bg-purple-200 animate-pulse"></div>
+                    <Bot className="h-12 w-12 text-purple-600 relative z-10 animate-bounce" />
+                  </div>
                 </div>
                 <h3 className="text-lg font-semibold text-slate-900 mb-2">
                   AI is analyzing your questions...
