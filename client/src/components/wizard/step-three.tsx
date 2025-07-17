@@ -223,7 +223,7 @@ export default function StepThree({ applicationId, onNext, setCanProceed }: Step
                 <div className="mb-6">
                   <div className="h-24 w-24 mx-auto flex items-center justify-center">
                     <img 
-                      src="/attached_assets/Assistant-Bot_1752721464688.gif" 
+                      src="/assets/Assistant-Bot_1752721464688.gif" 
                       alt="AI Assistant analyzing"
                       className="h-20 w-20 object-contain"
                     />

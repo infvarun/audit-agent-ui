@@ -161,3 +161,5 @@ The application follows a monorepo structure with shared TypeScript types and sc
 - **✓ Applied database migration** to support new question analysis persistence
 - **✓ Enabled persistent Save button** allowing users to save tool suggestion changes at any time
 - **✓ Added state reset functionality** to mark changes as unsaved when users modify tool suggestions
+- **✓ Replaced Lottie animation with animated GIF** using user-provided Assistant Bot GIF file
+- **✓ Moved GIF to public/assets folder** for proper web accessibility
