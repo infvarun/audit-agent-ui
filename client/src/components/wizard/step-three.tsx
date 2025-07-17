@@ -221,11 +221,12 @@ export default function StepThree({ applicationId, onNext, setCanProceed }: Step
             <div className="flex items-center justify-center py-12">
               <div className="text-center max-w-md mx-auto">
                 <div className="mb-6">
-                  <div className="h-24 w-24 mx-auto flex items-center justify-center relative">
-                    <div className="absolute inset-0 rounded-full bg-purple-100 ai-pulse-slow"></div>
-                    <div className="absolute inset-1 rounded-full bg-purple-200 ai-pulse-delayed"></div>
-                    <div className="absolute inset-3 rounded-full bg-purple-300 ai-pulse"></div>
-                    <Bot className="h-12 w-12 text-purple-600 relative z-10 ai-pulse" />
+                  <div className="h-24 w-24 mx-auto flex items-center justify-center">
+                    <img 
+                      src="/attached_assets/Assistant-Bot_1752721464688.gif" 
+                      alt="AI Assistant analyzing"
+                      className="h-20 w-20 object-contain"
+                    />
                   </div>
                 </div>
                 <h3 className="text-lg font-semibold text-slate-900 mb-2">
