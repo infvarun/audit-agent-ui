@@ -335,8 +335,11 @@ async def detect_columns(file: UploadFile = File(...)):
         raise HTTPException(status_code=500, detail="Failed to detect columns")
 
 # Serve static files (React app)
-app.mount("/assets", StaticFiles(directory="public/assets"), name="assets")
-app.mount("/", StaticFiles(directory="dist/public", html=True), name="static")
+import os
+if os.path.exists("public/assets"):
+    app.mount("/assets", StaticFiles(directory="public/assets"), name="assets")
+if os.path.exists("dist/public"):
+    app.mount("/", StaticFiles(directory="dist/public", html=True), name="static")
 
 # Initialize database on startup
 @app.on_event("startup")
@@ -350,7 +353,8 @@ async def startup_event():
         raise
 
 if __name__ == "__main__":
-    port = int(os.getenv("PORT", 5000))
+    # Use port 8000 for backend, Node.js proxy uses 5000
+    port = 8000
     uvicorn.run(
         "main:app",
         host="0.0.0.0",
