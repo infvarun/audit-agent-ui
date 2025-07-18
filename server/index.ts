@@ -5,7 +5,13 @@ const execAsync = promisify(exec);
 
 // Start Vite dev server for React frontend
 console.log('🚀 Starting React development server...');
-const viteProcess = exec('npx vite --host 0.0.0.0 --port 5000', (error, stdout, stderr) => {
+const viteProcess = exec('npx vite --host 0.0.0.0 --port 5000', {
+  env: {
+    ...process.env,
+    VITE_HMR_HOST: '0.0.0.0',
+    VITE_HMR_PORT: '5000'
+  }
+}, (error, stdout, stderr) => {
   if (error) {
     console.error('Vite error:', error);
   }
