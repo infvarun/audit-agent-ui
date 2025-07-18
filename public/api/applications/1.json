@@ -1,0 +1,13 @@
+{
+  "id": 1,
+  "auditName": "Q4 2024 Financial Audit",
+  "name": "Customer Management System",
+  "ciId": "CMS-2024-001",
+  "startDate": "2024-01-01",
+  "endDate": "2024-12-31",
+  "settings": {
+    "enableFollowUpQuestions": true,
+    "emailNotifications": true
+  },
+  "createdAt": "2024-01-15T10:30:00Z"
+}

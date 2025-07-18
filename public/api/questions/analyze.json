@@ -1,0 +1,55 @@
+{
+  "totalQuestions": 25,
+  "questions": [
+    {
+      "id": "q1",
+      "originalQuestion": "What is the process for user authentication?",
+      "category": "Security",
+      "subcategory": "Authentication",
+      "prompt": "Analyze the user authentication process including login mechanisms, password policies, multi-factor authentication, and session management. Provide details on authentication protocols, security controls, and any vulnerabilities.",
+      "toolSuggestion": "SQL Server",
+      "connectorReason": "User authentication data is typically stored in database tables containing user credentials, login attempts, and security policies",
+      "connectorToUse": "sql_server"
+    },
+    {
+      "id": "q2",
+      "originalQuestion": "How are user permissions managed?",
+      "category": "Access Control",
+      "subcategory": "Authorization",
+      "prompt": "Examine the user permission management system including role-based access control (RBAC), permission inheritance, privilege escalation controls, and access review processes. Document the authorization matrix and any segregation of duties conflicts.",
+      "toolSuggestion": "ServiceNow",
+      "connectorReason": "Permission and role management is often handled through ITSM systems like ServiceNow for access requests and approvals",
+      "connectorToUse": "servicenow"
+    },
+    {
+      "id": "q3",
+      "originalQuestion": "What data backup procedures are in place?",
+      "category": "Data Management",
+      "subcategory": "Backup & Recovery",
+      "prompt": "Review data backup procedures including backup frequency, retention policies, restoration testing, offsite storage, and disaster recovery capabilities. Verify backup integrity and recovery time objectives (RTO) and recovery point objectives (RPO).",
+      "toolSuggestion": "NAS Path",
+      "connectorReason": "Backup data is typically stored on network-attached storage or file systems accessible via NAS paths",
+      "connectorToUse": "nas_path"
+    },
+    {
+      "id": "q4",
+      "originalQuestion": "Are there any unauthorized access attempts?",
+      "category": "Security",
+      "subcategory": "Threat Detection",
+      "prompt": "Investigate unauthorized access attempts including failed login attempts, unusual access patterns, privilege escalation attempts, and security incidents. Analyze security logs for indicators of compromise and assess the effectiveness of intrusion detection systems.",
+      "toolSuggestion": "SQL Server",
+      "connectorReason": "Security logs and access attempt records are typically stored in database tables for analysis and monitoring",
+      "connectorToUse": "sql_server"
+    },
+    {
+      "id": "q5",
+      "originalQuestion": "What is the change management process?",
+      "category": "Operations",
+      "subcategory": "Change Control",
+      "prompt": "Evaluate the change management process including change request procedures, approval workflows, testing requirements, implementation procedures, and rollback plans. Review change documentation and assess compliance with change control policies.",
+      "toolSuggestion": "ServiceNow",
+      "connectorReason": "Change management processes are typically managed through ITSM platforms like ServiceNow for tracking and approval workflows",
+      "connectorToUse": "servicenow"
+    }
+  ]
+}

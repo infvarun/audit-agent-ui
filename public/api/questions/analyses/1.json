@@ -1,0 +1,31 @@
+{
+  "applicationId": 1,
+  "analyses": [
+    {
+      "id": "q1-analysis",
+      "applicationId": 1,
+      "questionId": "q1",
+      "originalQuestion": "What is the process for user authentication?",
+      "category": "Security",
+      "subcategory": "Authentication",
+      "aiPrompt": "Analyze the user authentication process including login mechanisms, password policies, multi-factor authentication, and session management. Provide details on authentication protocols, security controls, and any vulnerabilities.",
+      "toolSuggestion": "SQL Server",
+      "connectorReason": "User authentication data is typically stored in database tables containing user credentials, login attempts, and security policies",
+      "connectorToUse": "sql_server",
+      "createdAt": "2024-01-15T10:30:00Z"
+    },
+    {
+      "id": "q2-analysis",
+      "applicationId": 1,
+      "questionId": "q2",
+      "originalQuestion": "How are user permissions managed?",
+      "category": "Access Control",
+      "subcategory": "Authorization",
+      "aiPrompt": "Examine the user permission management system including role-based access control (RBAC), permission inheritance, privilege escalation controls, and access review processes. Document the authorization matrix and any segregation of duties conflicts.",
+      "toolSuggestion": "ServiceNow",
+      "connectorReason": "Permission and role management is often handled through ITSM systems like ServiceNow for access requests and approvals",
+      "connectorToUse": "servicenow",
+      "createdAt": "2024-01-15T10:30:00Z"
+    }
+  ]
+}

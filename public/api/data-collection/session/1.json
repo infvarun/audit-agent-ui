@@ -1,0 +1,45 @@
+{
+  "id": 1,
+  "applicationId": 1,
+  "status": "completed",
+  "progress": 100,
+  "logs": [
+    {
+      "timestamp": "2024-01-15T10:30:00Z",
+      "message": "Starting data collection session",
+      "level": "info"
+    },
+    {
+      "timestamp": "2024-01-15T10:35:00Z",
+      "message": "Connected to SQL Server database",
+      "level": "info"
+    },
+    {
+      "timestamp": "2024-01-15T10:40:00Z",
+      "message": "Analyzing user authentication tables",
+      "level": "info"
+    },
+    {
+      "timestamp": "2024-01-15T10:45:00Z",
+      "message": "Found 1,250 user records",
+      "level": "info"
+    },
+    {
+      "timestamp": "2024-01-15T10:50:00Z",
+      "message": "Checking for unauthorized access attempts",
+      "level": "info"
+    },
+    {
+      "timestamp": "2024-01-15T10:52:00Z",
+      "message": "Found 15 failed login attempts in the past 30 days",
+      "level": "warning"
+    },
+    {
+      "timestamp": "2024-01-15T10:55:00Z",
+      "message": "Data collection completed successfully",
+      "level": "info"
+    }
+  ],
+  "startedAt": "2024-01-15T10:30:00Z",
+  "completedAt": "2024-01-15T10:55:00Z"
+}

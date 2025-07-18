@@ -1,0 +1,13 @@
+{
+  "id": 3,
+  "auditName": "Data Privacy Assessment",
+  "name": "Payment Processing System",
+  "ciId": "PPS-2024-003",
+  "startDate": "2024-03-01",
+  "endDate": "2024-05-31",
+  "settings": {
+    "enableFollowUpQuestions": true,
+    "emailNotifications": false
+  },
+  "createdAt": "2024-03-01T09:15:00Z"
+}

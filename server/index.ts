@@ -1,10 +1,7 @@
 import { exec } from 'child_process';
-import { promisify } from 'util';
 
-const execAsync = promisify(exec);
-
-// Start Vite dev server for React frontend
-console.log('🚀 Starting React development server...');
+// Start only Vite dev server for React frontend
+console.log('🚀 Starting React frontend with static API...');
 const viteProcess = exec('npx vite --host 0.0.0.0 --port 5000', {
   env: {
     ...process.env,
@@ -21,33 +18,19 @@ const viteProcess = exec('npx vite --host 0.0.0.0 --port 5000', {
   }
 });
 
-// Start Python backend
-console.log('🐍 Starting Python FastAPI backend...');
-const pythonProcess = exec('cd server && python main.py', (error, stdout, stderr) => {
-  if (error) {
-    console.error('Python error:', error);
-  }
-  console.log('Python output:', stdout);
-  if (stderr) {
-    console.error('Python stderr:', stderr);
-  }
-});
-
 // Handle process termination
 process.on('SIGINT', () => {
-  console.log('🛑 Shutting down servers...');
+  console.log('🛑 Shutting down frontend server...');
   viteProcess.kill();
-  pythonProcess.kill();
   process.exit(0);
 });
 
 process.on('SIGTERM', () => {
-  console.log('🛑 Shutting down servers...');
+  console.log('🛑 Shutting down frontend server...');
   viteProcess.kill();
-  pythonProcess.kill();
   process.exit(0);
 });
 
-console.log('✅ Both servers starting...');
+console.log('✅ Frontend server starting...');
 console.log('📦 React frontend: http://localhost:5000');
-console.log('🔗 Python backend: http://localhost:8000');
+console.log('📂 Static API files served from: /public/api/');

@@ -1,0 +1,13 @@
+{
+  "id": 2,
+  "auditName": "Security Compliance Review",
+  "name": "Employee Portal",
+  "ciId": "EP-2024-002",
+  "startDate": "2024-06-01",
+  "endDate": "2024-08-31",
+  "settings": {
+    "enableFollowUpQuestions": false,
+    "emailNotifications": true
+  },
+  "createdAt": "2024-06-01T14:20:00Z"
+}
