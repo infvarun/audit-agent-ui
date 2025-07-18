@@ -26,7 +26,7 @@ Preferred communication style: Simple, everyday language.
 - **AI Integration**: LangChain with OpenAI GPT-4o for question analysis
 - **API**: RESTful API with JSON responses
 - **Development**: Uvicorn server with hot reload support
-- **Proxy**: Node.js proxy server for frontend serving and API routing
+- **CORS**: Direct CORS configuration for React frontend communication
 
 ## Key Components
 
@@ -80,13 +80,14 @@ Preferred communication style: Simple, everyday language.
 ## Deployment Strategy
 
 ### Development
-- **Frontend**: Vite dev server with HMR via Node.js proxy
-- **Backend**: Python FastAPI with Uvicorn and hot reload
+- **Frontend**: Vite dev server with HMR on port 5173
+- **Backend**: Python FastAPI with Uvicorn and hot reload on port 5000
 - **Database**: Neon PostgreSQL with connection pooling
 - **Build**: Vite for frontend, Python for backend execution
+- **Communication**: Direct API calls with CORS configuration
 
 ### Production
-- **Frontend**: Static files built with Vite and served by Node.js proxy
+- **Frontend**: Static files built with Vite and served by Python FastAPI
 - **Backend**: Python FastAPI with Uvicorn for production deployment
 - **Database**: SQLAlchemy models with direct PostgreSQL connection
 - **Environment**: DATABASE_URL and OPENAI_API_KEY required
@@ -97,7 +98,7 @@ Preferred communication style: Simple, everyday language.
 - Database schema created via SQLAlchemy metadata
 - Static file serving integrated with Node.js proxy
 
-The application follows a hybrid architecture with React frontend and Python backend, using a Node.js proxy for development serving. The frontend uses TypeScript for type safety while the backend uses Pydantic models for data validation, maintaining clear separation between frontend and backend concerns.
+The application follows a clean separation architecture with React frontend and Python backend communicating directly via CORS-enabled API calls. The frontend uses TypeScript for type safety while the backend uses Pydantic models for data validation, maintaining clear separation between frontend and backend concerns.
 
 ## Recent Changes: Latest modifications with dates
 
@@ -205,3 +206,15 @@ The application follows a hybrid architecture with React frontend and Python bac
 - **✓ Created comprehensive README.md documentation** with complete setup guide, architecture explanation, and development guidelines
 - **✓ Added detailed wizard step customization guide** for future development and modifications
 - **✓ Documented complete data flow and API endpoint specifications** for maintainability
+
+### July 18, 2025 - Eliminated Node.js Proxy Architecture
+- **✓ Removed Node.js proxy server** (server/index.ts) completely from the architecture
+- **✓ Configured direct CORS communication** between React frontend and Python backend
+- **✓ Updated Python FastAPI with proper CORS middleware** for localhost:5173 and other development ports
+- **✓ Modified React frontend API client** to connect directly to Python backend on port 5000
+- **✓ Created separate server startup scripts** for independent development workflow
+- **✓ Updated package.json dev script** to run only Vite dev server for React frontend
+- **✓ Added environment configuration** with VITE_API_URL for backend endpoint specification
+- **✓ Created comprehensive database DDL and DML scripts** with sample data and realistic audit scenarios
+- **✓ Updated architecture documentation** to reflect direct frontend-backend communication
+- **✓ Verified API endpoints working** with direct backend communication (no proxy layer)

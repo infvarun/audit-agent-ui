@@ -242,12 +242,22 @@ app = FastAPI(
     lifespan=lifespan
 )
 
-# Add CORS middleware
+# Add CORS middleware for React frontend
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[
+        "http://localhost:5173",  # Vite dev server default port
+        "http://localhost:3000",  # Alternative React dev port
+        "http://localhost:5000",  # Alternative port
+        "http://127.0.0.1:5173",
+        "http://127.0.0.1:3000", 
+        "http://127.0.0.1:5000",
+        "http://0.0.0.0:5173",
+        "http://0.0.0.0:3000",
+        "http://0.0.0.0:5000",
+    ],
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["*"],
 )
 
