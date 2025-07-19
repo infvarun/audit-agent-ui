@@ -7,7 +7,8 @@ const viteProcess = exec('npx vite --config ./vite.dev.config.js --host 0.0.0.0 
     ...process.env,
     VITE_HMR_HOST: '0.0.0.0',
     VITE_HMR_PORT: '5000',
-    VITE_ALLOWED_HOSTS: 'all'
+    VITE_ALLOWED_HOSTS: 'all',
+    DANGEROUSLY_DISABLE_HOST_CHECK: 'true'
   }
 }, (error, stdout, stderr) => {
   if (error) {
