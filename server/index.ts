@@ -2,11 +2,12 @@ import { exec } from 'child_process';
 
 // Start only Vite dev server for React frontend
 console.log('🚀 Starting React frontend with static API...');
-const viteProcess = exec('npx vite --host 0.0.0.0 --port 5000', {
+const viteProcess = exec('npx vite --config ./vite.dev.config.js --host 0.0.0.0 --port 5000', {
   env: {
     ...process.env,
     VITE_HMR_HOST: '0.0.0.0',
-    VITE_HMR_PORT: '5000'
+    VITE_HMR_PORT: '5000',
+    VITE_ALLOWED_HOSTS: 'all'
   }
 }, (error, stdout, stderr) => {
   if (error) {
